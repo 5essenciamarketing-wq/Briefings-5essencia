@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quintessência — Acesso ao Evento</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #050810;
+    --surface: #0c1120;
+    --surface2: #111827;
+    --blue: #3b82f6;
+    --blue-glow: rgba(59,130,246,0.35);
+    --blue-light: #60a5fa;
+    --cyan: #06b6d4;
+    --cyan-glow: rgba(6,182,212,0.3);
+    --text: #f0f4ff;
+    --muted: #8899bb;
+    --border: rgba(59,130,246,0.2);
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    position: relative;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px; left: 50%;
+    transform: translateX(-50%);
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -200px; left: 50%;
+    transform: translateX(-50%);
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(6,182,212,0.08) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 36px;
+    max-width: 420px;
+    width: 100%;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 0 60px rgba(59,130,246,0.08), 0 0 0 1px rgba(255,255,255,0.04);
+    animation: fadeUp 0.6s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .logo-area { text-align: center; margin-bottom: 32px; }
+  .logo-symbol {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 44px;
+    letter-spacing: 4px;
+    background: linear-gradient(135deg, var(--blue-light), var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .logo-sub {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .divider {
+    width: 40px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--blue), transparent);
+    margin: 16px auto;
+  }
+  .step { display: none; }
+  .step.active { display: block; animation: fadeUp 0.4s ease both; }
+  h2 { font-size: 22px; font-weight: 600; margin-bottom: 8px; line-height: 1.3; color: var(--text); }
+  .highlight { color: var(--blue-light); }
+  p { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 24px; }
+  .input-wrap { position: relative; margin-bottom: 16px; }
+  .input-wrap span {
+    position: absolute; left: 16px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--blue); font-size: 16px; font-weight: 600;
+  }
+  input[type="text"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px 14px 32px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input[type="text"]:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px var(--blue-glow);
+  }
+  input[type="text"]::placeholder { color: var(--muted); }
+  .btn {
+    width: 100%;
+    padding: 15px;
+    border-radius: 12px;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--blue), #1d4ed8);
+    color: white;
+    box-shadow: 0 0 20px var(--blue-glow), 0 4px 15px rgba(0,0,0,0.3);
+  }
+  .btn-primary:hover {
+    box-shadow: 0 0 35px var(--blue-glow), 0 4px 20px rgba(0,0,0,0.4);
+    transform: translateY(-1px);
+  }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    transform: skewX(-20deg);
+    transition: left 0.5s;
+  }
+  .btn-primary:hover::before { left: 150%; }
+  .btn-insta {
+    background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
+    color: white;
+    box-shadow: 0 0 20px rgba(131,58,180,0.4), 0 4px 15px rgba(0,0,0,0.3);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-decoration: none;
+    padding: 15px;
+    border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-insta:hover {
+    box-shadow: 0 0 35px rgba(131,58,180,0.5), 0 4px 20px rgba(0,0,0,0.4);
+    transform: translateY(-1px);
+  }
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--blue-light);
+    border: 1px solid var(--border);
+    box-shadow: 0 0 10px rgba(59,130,246,0.1);
+  }
+  .btn-secondary:hover {
+    border-color: var(--blue);
+    box-shadow: 0 0 20px var(--blue-glow);
+    transform: translateY(-1px);
+  }
+  .insta-icon { width: 20px; height: 20px; fill: white; flex-shrink: 0; }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(59,130,246,0.1);
+    border: 1px solid rgba(59,130,246,0.25);
+    border-radius: 100px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: var(--blue-light);
+    margin-bottom: 20px;
+  }
+  .badge-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 6px var(--cyan);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .access-box {
+    background: var(--surface2);
+    border: 1px solid rgba(6,182,212,0.25);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 24px;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(6,182,212,0.08);
+  }
+  .access-box .icon { font-size: 32px; margin-bottom: 8px; }
+  .access-box h3 { font-size: 16px; font-weight: 600; color: var(--cyan); margin-bottom: 4px; }
+  .access-box p { font-size: 13px; color: var(--muted); margin: 0; }
+  .note { text-align: center; font-size: 12px; color: var(--muted); margin-top: 16px; opacity: 0.7; }
+  .avatar {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue), var(--cyan));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 700; color: white;
+    margin: 0 auto 16px;
+    box-shadow: 0 0 20px var(--blue-glow);
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 1px;
+  }
+  .error { font-size: 12px; color: #f87171; margin-top: 8px; display: none; }
+  .steps-indicator {
+    display: flex; justify-content: center;
+    gap: 6px; margin-bottom: 28px;
+  }
+  .step-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: all 0.3s;
+  }
+  .step-dot.active {
+    background: var(--blue);
+    box-shadow: 0 0 8px var(--blue-glow);
+    width: 20px; border-radius: 3px;
+  }
+  #btn-ja-sigo {
+    display: none;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  #btn-ja-sigo.visivel {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .contador-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 4px;
+    font-size: 13px;
+    color: var(--muted);
+    min-height: 28px;
+  }
+  .contador-num {
+    font-weight: 700;
+    color: var(--blue-light);
+    font-size: 15px;
+    min-width: 18px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo-area">
+    <div class="logo-symbol">QUINTESSÊNCIA</div>
+    <div class="divider"></div>
+    <div class="logo-sub">Acesso ao Evento</div>
+  </div>
+
+  <div class="steps-indicator">
+    <div class="step-dot active" id="dot1"></div>
+    <div class="step-dot" id="dot2"></div>
+    <div class="step-dot" id="dot3"></div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="step active" id="step1">
+    <h2>Bem-vindo ao <span class="highlight">evento</span> ✦</h2>
+    <p>Para acessar as fotos e vídeos, informe seu @ do Instagram abaixo.</p>
+    <div class="input-wrap">
+      <span>@</span>
+      <input type="text" id="insta-handle" placeholder="seuusuario" autocomplete="off" autocapitalize="none" />
+    </div>
+    <div class="error" id="error1">Por favor, informe seu @ do Instagram.</div>
+    <button class="btn btn-primary" onclick="goStep2()" style="margin-top: 12px;">Continuar →</button>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step" id="step2">
+    <div class="badge"><div class="badge-dot"></div>Quase lá</div>
+    <div class="avatar" id="avatar-initials">?</div>
+    <h2 style="text-align:center;">Olá, <span class="highlight" id="name-display"></span>! 👋</h2>
+    <p style="text-align:center; margin-top: 8px; margin-bottom: 24px;">
+      Para receber o acesso às fotos e vídeos, siga a <strong style="color:var(--text);">5essência Marketing</strong> no Instagram e volte aqui.
+    </p>
+
+    <a href="https://www.instagram.com/5essenciamarketing/" target="_blank" class="btn-insta" id="btn-seguir" onclick="iniciarContador()">
+      <svg class="insta-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+      </svg>
+      Seguir @5essenciamarketing
+    </a>
+
+    <div class="contador-wrap" id="contador-wrap" style="display:none;">
+      <span>Aguarde</span>
+      <span class="contador-num" id="contador-num">8</span>
+      <span>segundos...</span>
+    </div>
+
+    <button class="btn btn-secondary" id="btn-ja-sigo" onclick="goStep3()">
+      ✓ Já estou seguindo — Liberar acesso
+    </button>
+
+    <p class="note" id="note-seguir">Clique no botão acima para seguir e liberar o acesso.</p>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step" id="step3">
+    <div class="badge"><div class="badge-dot"></div>Acesso liberado</div>
+    <h2 style="text-align:center;">Aproveite, <span class="highlight" id="name-display2"></span>! 🎉</h2>
+    <p style="text-align:center; margin-top:8px;">Suas fotos e vídeos do evento estão prontos. Clique abaixo para acessar a galeria completa.</p>
+    <div class="access-box">
+      <div class="icon">📸</div>
+      <h3>Galeria do Evento</h3>
+      <p>Fotos e vídeos exclusivos liberados para você</p>
+    </div>
+    <a href="https://drive.google.com/drive/folders/14MaOJjrSFBOOGPwERvxzesSwlsSccxcl?usp=share_link" target="_blank" class="btn btn-primary" style="display:block; text-align:center; text-decoration:none; padding:15px;">
+      ✦ Acessar Galeria
+    </a>
+    <p class="note">Obrigado por acompanhar a 5essência ✦</p>
+  </div>
+</div>
+
+<script>
+  let username = '';
+  let contadorAtivo = false;
+
+  function goStep2() {
+    const val = document.getElementById('insta-handle').value.trim().replace('@', '');
+    if (!val) {
+      document.getElementById('error1').style.display = 'block';
+      return;
+    }
+    username = val;
+    const initials = val.substring(0, 2).toUpperCase();
+    document.getElementById('avatar-initials').textContent = initials;
+    document.getElementById('name-display').textContent = '@' + val;
+    document.getElementById('name-display2').textContent = '@' + val;
+
+    document.getElementById('step1').classList.remove('active');
+    document.getElementById('step2').classList.add('active');
+    document.getElementById('dot1').classList.remove('active');
+    document.getElementById('dot2').classList.add('active');
+  }
+
+  function iniciarContador() {
+    if (contadorAtivo) return;
+    contadorAtivo = true;
+
+    const wrapContador = document.getElementById('contador-wrap');
+    const numEl = document.getElementById('contador-num');
+    const btnJaSigo = document.getElementById('btn-ja-sigo');
+    const noteSeguir = document.getElementById('note-seguir');
+
+    wrapContador.style.display = 'flex';
+    noteSeguir.style.display = 'none';
+
+    let segundos = 8;
+    numEl.textContent = segundos;
+
+    const intervalo = setInterval(() => {
+      segundos--;
+      numEl.textContent = segundos;
+      if (segundos <= 0) {
+        clearInterval(intervalo);
+        wrapContador.style.display = 'none';
+        btnJaSigo.style.display = 'block';
+        setTimeout(() => {
+          btnJaSigo.classList.add('visivel');
+        }, 50);
+      }
+    }, 1000);
+  }
+
+  function goStep3() {
+    document.getElementById('step2').classList.remove('active');
+    document.getElementById('step3').classList.add('active');
+    document.getElementById('dot2').classList.remove('active');
+    document.getElementById('dot3').classList.add('active');
+  }
+
+  document.getElementById('insta-handle').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') goStep2();
+  });
+</script>
+</body>
+</html>

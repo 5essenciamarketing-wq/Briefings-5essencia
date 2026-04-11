@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5essência — Sistema</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=Figtree:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --bg:      #F7F6F3;
+  --surface: #FFFFFF;
+  --border:  #E8E6E1;
+  --border2: #D4D0C8;
+  --ink:     #1A1916;
+  --ink2:    #5C5A54;
+  --ink3:    #9E9B93;
+  --ink4:    #C4C1B8;
+  --green:   #2D6A4F;
+  --red:     #A63228;
+  --amber:   #9B6E1E;
+  --blue:    #1E4E8C;
+  --cyan:    #1A6B6B;
+  --r:  6px;
+  --r2: 12px;
+  --head: 'Playfair Display', Georgia, serif;
+  --body: 'Figtree', sans-serif;
+  --sh:  0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --sh2: 0 4px 24px rgba(0,0,0,0.10);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.6;overflow:hidden;}
+
+/* ── TELA DE LOGIN ── */
+#login-screen {
+  position:fixed;inset:0;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  z-index:9000;
+}
+.login-card {
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r2);padding:44px 40px;
+  width:100%;max-width:380px;box-shadow:var(--sh2);
+}
+.login-logo { font-family:var(--head);font-size:26px;font-weight:400;color:var(--ink);margin-bottom:4px; }
+.login-sub  { font-size:11px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink3);margin-bottom:36px; }
+.login-err  { background:#FBF0EE;border:1px solid #EDD0CC;border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--red);margin-bottom:16px;display:none; }
+.login-err.show { display:block; }
+
+/* ── APP ── */
+.app{display:flex;height:100vh;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:224px;min-width:224px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;}
+.logo-wrap{padding:26px 24px 20px;border-bottom:1px solid var(--border);}
+.logo-name{font-family:var(--head);font-size:19px;font-weight:400;letter-spacing:-0.01em;line-height:1.1;}
+.logo-sub{font-size:10px;font-weight:500;color:var(--ink3);letter-spacing:0.16em;text-transform:uppercase;margin-top:4px;}
+.nav{flex:1;padding:12px 0;overflow-y:auto;}
+.nav-label{padding:14px 24px 4px;font-size:9.5px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink4);}
+.nav-item{display:flex;align-items:center;gap:12px;padding:9px 24px;cursor:pointer;color:var(--ink2);font-size:13.5px;font-weight:400;transition:color 0.12s,background 0.12s;position:relative;}
+.nav-item::before{content:'';position:absolute;left:0;top:7px;bottom:7px;width:2px;background:var(--ink);border-radius:2px;opacity:0;transition:opacity 0.14s;}
+.nav-item:hover{color:var(--ink);background:var(--bg);}
+.nav-item.active{color:var(--ink);font-weight:500;}
+.nav-item.active::before{opacity:1;}
+.nav-dot{width:4px;height:4px;border-radius:50%;background:currentColor;opacity:0.35;flex-shrink:0;}
+.nav-item.active .nav-dot{opacity:1;}
+.sidebar-foot{padding:14px 24px;border-top:1px solid var(--border);}
+.user-info{font-size:12px;color:var(--ink2);margin-bottom:8px;}
+.user-role{font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink3);}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{height:58px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 30px;flex-shrink:0;}
+.topbar-title{font-family:var(--head);font-size:17px;font-weight:400;letter-spacing:-0.01em;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.content{flex:1;overflow-y:auto;padding:28px 30px;}
+
+/* ── BOTÕES ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--body);font-size:13px;font-weight:500;letter-spacing:0.01em;transition:all 0.12s;white-space:nowrap;}
+.btn-primary{background:var(--ink);color:#fff;}
+.btn-primary:hover{background:#2e2c28;}
+.btn-ghost{background:transparent;color:var(--ink3);border:1px solid var(--border);}
+.btn-ghost:hover{color:var(--ink);border-color:var(--border2);}
+.btn-danger{background:#FBF0EE;color:var(--red);border:1px solid #EDD0CC;}
+.btn-danger:hover{background:#F5E0DC;}
+.btn-sm{padding:5px 11px;font-size:12px;}
+.btn-logout{background:transparent;color:var(--ink3);border:1px solid var(--border);font-size:12px;padding:5px 12px;}
+.btn-logout:hover{color:var(--red);border-color:#EDD0CC;background:#FBF0EE;}
+
+/* ── MÉTRICAS ── */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:24px;box-shadow:var(--sh);}
+.metric{background:var(--surface);padding:22px;}
+.metric-label{font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink3);margin-bottom:8px;}
+.metric-value{font-family:var(--head);font-size:28px;font-weight:400;color:var(--ink);letter-spacing:-0.02em;line-height:1;}
+.metric-value.pos{color:var(--green);}
+.metric-sub{font-size:11.5px;color:var(--ink3);font-weight:300;margin-top:5px;}
+
+/* ── CARD ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;box-shadow:var(--sh);}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:15px 22px;border-bottom:1px solid var(--border);}
+.card-title{font-family:var(--head);font-size:14px;font-weight:400;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+
+/* ── TABELA ── */
+table{width:100%;border-collapse:collapse;}
+thead th{padding:10px 22px;text-align:left;font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink3);border-bottom:1px solid var(--border);background:var(--bg);}
+tbody td{padding:13px 22px;border-bottom:1px solid var(--border);font-size:13.5px;vertical-align:middle;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr{transition:background 0.1s;}
+tbody tr:hover td{background:#FAFAF8;}
+
+/* ── BADGE ── */
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:500;}
+.badge-ativo,.badge-pago,.badge-aprovada,.badge-entregue,.badge-aprovado{background:#EAF4EE;color:var(--green);}
+.badge-inativo,.badge-cancelado,.badge-recusada{background:#FBF0EE;color:var(--red);}
+.badge-lead,.badge-rascunho,.badge-briefing{background:#EEF2FA;color:var(--blue);}
+.badge-pendente,.badge-em_andamento,.badge-enviada{background:#FBF5EA;color:var(--amber);}
+.badge-revisao{background:#EAF4F4;color:var(--cyan);}
+.badge-pausado,.badge-atrasado{background:#FBF0EE;color:var(--red);}
+.badge-admin{background:#1A1916;color:#fff;}
+.badge-cliente{background:var(--bg);color:var(--ink2);border:1px solid var(--border2);}
+
+/* ── KANBAN ── */
+.kanban{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;}
+.k-col{min-width:205px;max-width:205px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);box-shadow:var(--sh);padding:16px;}
+.k-col-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.k-col-label{font-size:10.5px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink3);}
+.k-count{font-size:11px;color:var(--ink4);background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:0 7px;line-height:18px;}
+.k-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:11px 13px;margin-bottom:7px;cursor:pointer;transition:border-color 0.12s,box-shadow 0.12s;}
+.k-card:hover{border-color:var(--border2);box-shadow:var(--sh);}
+.k-card-name{font-size:13px;font-weight:500;margin-bottom:2px;}
+.k-card-client{font-size:11.5px;color:var(--ink3);}
+.k-card-val{font-size:11.5px;color:var(--green);font-weight:500;margin-top:6px;}
+.k-card-date{font-size:10.5px;color:var(--ink4);margin-top:2px;}
+.k-empty{font-size:12px;color:var(--ink4);text-align:center;padding:18px 0;}
+
+/* ── FINANCEIRO ── */
+.fin-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:20px;box-shadow:var(--sh);}
+.fin-block{background:var(--surface);padding:20px 22px;}
+.fin-lbl{font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink3);margin-bottom:7px;}
+.fin-num{font-family:var(--head);font-size:24px;font-weight:400;letter-spacing:-0.02em;}
+.fin-num.r{color:var(--green);}
+.fin-num.d{color:var(--red);}
+.fin-num.s{color:var(--ink);}
+
+/* ── PORTAL CLIENTE ── */
+.portal-header{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:24px 28px;margin-bottom:20px;box-shadow:var(--sh);}
+.portal-name{font-family:var(--head);font-size:22px;font-weight:400;margin-bottom:4px;}
+.portal-meta{font-size:12px;color:var(--ink3);}
+.info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:20px;box-shadow:var(--sh);}
+.info-block{background:var(--surface);padding:18px 22px;}
+.info-lbl{font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;}
+.info-val{font-size:14px;color:var(--ink);font-weight:500;}
+
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(26,25,22,0.4);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity 0.18s;}
+.overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:var(--sh2);transform:translateY(10px);transition:transform 0.18s;}
+.overlay.open .modal{transform:translateY(0);}
+.modal-head{padding:22px 26px 17px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-family:var(--head);font-size:16px;font-weight:400;}
+.modal-x{background:none;border:none;color:var(--ink3);font-size:17px;cursor:pointer;padding:2px 5px;line-height:1;border-radius:4px;}
+.modal-x:hover{background:var(--bg);color:var(--ink);}
+.modal-body{padding:22px 26px;display:flex;flex-direction:column;gap:14px;}
+.modal-foot{padding:15px 26px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+.modal-section{font-size:10px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink3);padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:2px;}
+
+/* ── FORM ── */
+.fg{display:flex;flex-direction:column;gap:5px;}
+.fg label{font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink3);}
+.fg input,.fg select,.fg textarea{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);color:var(--ink);font-family:var(--body);font-size:13.5px;padding:9px 12px;outline:none;transition:border-color 0.12s,background 0.12s;width:100%;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--ink);background:#fff;}
+.fg textarea{resize:vertical;min-height:72px;}
+.fg select option{background:#fff;}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.frow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+
+/* ── TOAST ── */
+.toasts{position:fixed;bottom:22px;right:22px;z-index:2000;display:flex;flex-direction:column;gap:8px;}
+.toast{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:11px 16px;font-size:13px;display:flex;align-items:center;gap:10px;box-shadow:var(--sh2);animation:tin 0.22s ease;}
+.toast.ok{border-left:3px solid var(--green);}
+.toast.er{border-left:3px solid var(--red);}
+@keyframes tin{from{transform:translateX(12px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+
+/* ── MISC ── */
+.empty{text-align:center;padding:48px 20px;color:var(--ink4);}
+.empty p{font-size:13px;margin-top:8px;}
+.loading{padding:36px;text-align:center;color:var(--ink3);font-size:13px;letter-spacing:0.05em;}
+.act{background:none;border:none;color:var(--ink3);cursor:pointer;padding:4px 7px;border-radius:5px;font-size:13px;transition:all 0.12s;}
+.act:hover{color:var(--ink);background:var(--bg);}
+.act.del:hover{color:var(--red);background:#FBF0EE;}
+.search{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:7px 14px;color:var(--ink);font-family:var(--body);font-size:13px;outline:none;width:200px;transition:border-color 0.12s;}
+.search:focus{border-color:var(--ink);}
+.search::placeholder{color:var(--ink4);}
+.divider{height:1px;background:var(--border);margin:4px 0;}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(7px);}to{opacity:1;transform:translateY(0);}}
+.anim{animation:fadeUp 0.22s ease both;}
+</style>
+</head>
+<body>
+
+<!-- ── TELA DE LOGIN ── -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">5essência</div>
+    <div class="login-sub">Área restrita</div>
+    <div class="login-err" id="login-err"></div>
+    <div class="fg" style="margin-bottom:12px">
+      <label>E-mail</label>
+      <input type="email" id="login-email" placeholder="seu@email.com" autocomplete="email">
+    </div>
+    <div class="fg" style="margin-bottom:22px">
+      <label>Senha</label>
+      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="doLogin()" id="login-btn">Entrar</button>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div class="app" id="app" style="display:none">
+  <nav class="sidebar">
+    <div class="logo-wrap">
+      <div class="logo-name">5essência</div>
+      <div class="logo-sub" id="sidebar-role-label">Painel</div>
+    </div>
+    <div class="nav" id="sidebar-nav"></div>
+    <div class="sidebar-foot">
+      <div class="user-info" id="user-email-display"></div>
+      <div class="user-role" id="user-role-display"></div>
+      <div style="margin-top:10px">
+        <button class="btn btn-logout" onclick="doLogout()">Sair</button>
+      </div>
+    </div>
+  </nav>
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="page-title">Dashboard</div>
+      <div class="topbar-right" id="page-actions"></div>
+    </div>
+    <div class="content" id="content"><div class="loading">Carregando…</div></div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toasts" id="toasts"></div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" onclick="overlayClick(event)">
+  <div class="modal" id="modal">
+    <div class="modal-head">
+      <span class="modal-title" id="m-title"></span>
+      <button class="modal-x" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="m-body"></div>
+    <div class="modal-foot" id="m-foot"></div>
+  </div>
+</div>
+
+<script>
+// ── SUPABASE ─────────────────────────────────────────────────────
+const {createClient} = supabase;
+const db = createClient(
+  'https://zebudefzhakitwjswvkl.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InplYnVkZWZ6aGFraXR3anN3dmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTE1MDksImV4cCI6MjA5MTQ4NzUwOX0.uKRcENdJFNirbC84qG7uIkkDFbn4McQ4DGxh3CKAyPM'
+);
+
+// ── ESTADO ────────────────────────────────────────────────────────
+let currentUser = null;
+let currentRole = null; // 'admin' | 'cliente'
+let currentClienteId = null;
+let clientes=[], projetos=[], financeiro=[], propostas=[];
+
+// ── UTILS ─────────────────────────────────────────────────────────
+const R = v => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v||0);
+const D = d => d ? new Date(d+'T00:00:00').toLocaleDateString('pt-BR') : '—';
+const BL = {ativo:'Ativo',inativo:'Inativo',lead:'Lead',briefing:'Briefing',em_andamento:'Em andamento',revisao:'Revisão',aprovado:'Aprovado',entregue:'Entregue',pausado:'Pausado',pendente:'Pendente',pago:'Pago',atrasado:'Atrasado',cancelado:'Cancelado',rascunho:'Rascunho',enviada:'Enviada',aprovada:'Aprovada',recusada:'Recusada'};
+const badge = s => `<span class="badge badge-${s}">${BL[s]||s}</span>`;
+const fmtCPF = v => v ? v.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4') : '—';
+const fmtCNPJ = v => v ? v.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,'$1.$2.$3/$4-$5') : '—';
+
+function toast(msg, type='ok'){
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${type==='ok'?'✓':'✕'}</span> ${msg}`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(()=>el.remove(), 3200);
+}
+function openModal(title, body, foot){
+  document.getElementById('m-title').textContent = title;
+  document.getElementById('m-body').innerHTML = body;
+  document.getElementById('m-foot').innerHTML = foot;
+  document.getElementById('overlay').classList.add('open');
+}
+function closeModal(){ document.getElementById('overlay').classList.remove('open'); }
+function overlayClick(e){ if(e.target===document.getElementById('overlay')) closeModal(); }
+function setContent(html){ document.getElementById('content').innerHTML = `<div class="anim">${html}</div>`; }
+function setActions(html){ document.getElementById('page-actions').innerHTML = html; }
+function v(id){ return document.getElementById(id)?.value || ''; }
+
+// ── AUTH ──────────────────────────────────────────────────────────
+async function doLogin(){
+  const email = v('login-email').trim();
+  const pass  = v('login-pass');
+  if(!email||!pass){ showErr('Preencha e-mail e senha.'); return; }
+  const btn = document.getElementById('login-btn');
+  btn.textContent = 'Entrando…'; btn.disabled = true;
+  const {data, error} = await db.auth.signInWithPassword({email, password: pass});
+  if(error){ showErr('E-mail ou senha incorretos.'); btn.textContent='Entrar'; btn.disabled=false; return; }
+  await initSession(data.user);
+}
+
+function showErr(msg){
+  const el = document.getElementById('login-err');
+  el.textContent = msg; el.classList.add('show');
+}
+
+async function initSession(user){
+  currentUser = user;
+  // busca perfil na tabela profiles
+  const {data: profile} = await db.from('profiles').select('*').eq('id', user.id).single();
+  currentRole = profile?.role || 'cliente';
+  currentClienteId = profile?.cliente_id || null;
+
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('user-email-display').textContent = user.email;
+  document.getElementById('user-role-display').textContent = currentRole === 'admin' ? 'Administrador' : 'Cliente';
+  document.getElementById('sidebar-role-label').textContent = currentRole === 'admin' ? 'Painel admin' : 'Portal cliente';
+
+  buildNav();
+  if(currentRole === 'admin') go('dashboard');
+  else goPortal();
+}
+
+async function doLogout(){
+  await db.auth.signOut();
+  location.reload();
+}
+
+// ── NAVEGAÇÃO ─────────────────────────────────────────────────────
+function buildNav(){
+  const nav = document.getElementById('sidebar-nav');
+  if(currentRole === 'admin'){
+    nav.innerHTML = `
+      <div class="nav-label">Visão geral</div>
+      <div class="nav-item active" onclick="go('dashboard')"><span class="nav-dot"></span>Dashboard</div>
+      <div class="nav-label">Gestão</div>
+      <div class="nav-item" onclick="go('clientes')"><span class="nav-dot"></span>Clientes</div>
+      <div class="nav-item" onclick="go('projetos')"><span class="nav-dot"></span>Projetos</div>
+      <div class="nav-item" onclick="go('financeiro')"><span class="nav-dot"></span>Financeiro</div>
+      <div class="nav-item" onclick="go('propostas')"><span class="nav-dot"></span>Propostas</div>
+      <div class="nav-label">Acesso</div>
+      <div class="nav-item" onclick="go('usuarios')"><span class="nav-dot"></span>Usuários</div>
+    `;
+  } else {
+    nav.innerHTML = `
+      <div class="nav-label">Minha conta</div>
+      <div class="nav-item active" onclick="goPortal()"><span class="nav-dot"></span>Visão geral</div>
+      <div class="nav-item" onclick="goPortalProjetos()"><span class="nav-dot"></span>Meus projetos</div>
+      <div class="nav-item" onclick="goPortalFinanceiro()"><span class="nav-dot"></span>Financeiro</div>
+    `;
+  }
+}
+
+const TITLES = {dashboard:'Dashboard',clientes:'Clientes',projetos:'Projetos',financeiro:'Financeiro',propostas:'Propostas',usuarios:'Usuários'};
+function go(view){
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active', el.getAttribute('onclick')?.includes(`'${view}'`)||el.getAttribute('onclick')===`go('${view}')`));
+  document.getElementById('page-title').textContent = TITLES[view]||view;
+  setContent('<div class="loading">Carregando…</div>');
+  setActions('');
+  ({dashboard:renderDash,clientes:renderClientes,projetos:renderProjetos,financeiro:renderFin,propostas:renderPropostas,usuarios:renderUsuarios}[view])();
+}
+
+// ── DASHBOARD ADMIN ───────────────────────────────────────────────
+async function renderDash(){
+  const [rc,rp,rf,rpr] = await Promise.all([
+    db.from('clientes').select('*'),
+    db.from('projetos').select('*'),
+    db.from('financeiro').select('*'),
+    db.from('propostas').select('*'),
+  ]);
+  clientes=rc.data||[]; projetos=rp.data||[]; financeiro=rf.data||[]; propostas=rpr.data||[];
+  const ativos = clientes.filter(x=>x.status==='ativo').length;
+  const emAnd  = projetos.filter(x=>x.status==='em_andamento').length;
+  const receb  = financeiro.filter(x=>x.tipo==='receita'&&x.status==='pago').reduce((a,b)=>a+(b.valor||0),0);
+  const pend   = financeiro.filter(x=>x.status==='pendente').reduce((a,b)=>a+(b.valor||0),0);
+  const ultP   = [...projetos].reverse().slice(0,5);
+  const ultF   = [...financeiro].reverse().slice(0,5);
+  setContent(`
+    <div class="metrics">
+      <div class="metric"><div class="metric-label">Clientes ativos</div><div class="metric-value">${ativos}</div><div class="metric-sub">${clientes.length} cadastrados</div></div>
+      <div class="metric"><div class="metric-label">Em andamento</div><div class="metric-value">${emAnd}</div><div class="metric-sub">${projetos.length} projetos</div></div>
+      <div class="metric"><div class="metric-label">Receita recebida</div><div class="metric-value pos" style="font-size:22px">${R(receb)}</div><div class="metric-sub">${R(pend)} a receber</div></div>
+      <div class="metric"><div class="metric-label">Propostas abertas</div><div class="metric-value">${propostas.filter(x=>x.status==='enviada').length}</div><div class="metric-sub">${propostas.length} total</div></div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-head"><span class="card-title">Projetos recentes</span><button class="btn btn-ghost btn-sm" onclick="go('projetos')">Ver todos</button></div>
+        ${ultP.length===0?'<div class="empty"><p>Nenhum projeto ainda</p></div>':`<table><thead><tr><th>Projeto</th><th>Status</th><th>Valor</th></tr></thead><tbody>${ultP.map(p=>{const cl=clientes.find(c=>c.id===p.cliente_id);return`<tr><td><div style="font-weight:500">${p.titulo}</div><div style="font-size:11.5px;color:var(--ink3)">${cl?.nome_completo||'—'}</div></td><td>${badge(p.status)}</td><td style="color:var(--green);font-weight:500">${R(p.valor)}</td></tr>`;}).join('')}</tbody></table>`}
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Lançamentos recentes</span><button class="btn btn-ghost btn-sm" onclick="go('financeiro')">Ver todos</button></div>
+        ${ultF.length===0?'<div class="empty"><p>Nenhum lançamento ainda</p></div>':`<table><thead><tr><th>Descrição</th><th>Valor</th><th>Status</th></tr></thead><tbody>${ultF.map(f=>`<tr><td>${f.descricao}</td><td style="color:${f.tipo==='receita'?'var(--green)':'var(--red)'};font-weight:500">${R(f.valor)}</td><td>${badge(f.status)}</td></tr>`).join('')}</tbody></table>`}
+      </div>
+    </div>
+  `);
+}
+
+// ── CLIENTES (ADMIN) ──────────────────────────────────────────────
+async function renderClientes(q=''){
+  const {data} = await db.from('clientes').select('*').order('created_at',{ascending:false});
+  clientes = data||[];
+  const lista = q ? clientes.filter(c=>(c.nome_completo+' '+(c.empresa||'')+' '+(c.email||'')).toLowerCase().includes(q.toLowerCase())) : clientes;
+  setActions(`<input class="search" placeholder="Buscar…" value="${q}" oninput="renderClientes(this.value)"><button class="btn btn-primary" onclick="formCliente()">+ Novo cliente</button>`);
+  setContent(`
+    <div class="card">
+      ${lista.length===0?'<div class="empty"><p>Nenhum cliente encontrado</p></div>':`
+      <table><thead><tr><th>Nome</th><th>Empresa / CNPJ</th><th>CPF</th><th>WhatsApp Fin.</th><th>Status</th><th></th></tr></thead><tbody>
+      ${lista.map(c=>`<tr>
+        <td><div style="font-weight:500">${c.nome_completo}</div><div style="font-size:11.5px;color:var(--ink3)">${c.email||''}</div></td>
+        <td><div>${c.empresa||'—'}</div><div style="font-size:11.5px;color:var(--ink3)">${fmtCNPJ(c.cnpj)}</div></td>
+        <td style="color:var(--ink2);font-size:12.5px">${fmtCPF(c.cpf)}</td>
+        <td>${c.whatsapp_financeiro?`<a href="https://wa.me/55${c.whatsapp_financeiro.replace(/\D/g,'')}" target="_blank" style="color:var(--green);text-decoration:none">${c.whatsapp_financeiro}</a>`:'—'}</td>
+        <td>${badge(c.status)}</td>
+        <td style="white-space:nowrap">
+          <button class="act" onclick="formCliente('${c.id}')" title="Editar">✎</button>
+          <button class="act del" onclick="delCliente('${c.id}')" title="Excluir">✕</button>
+        </td>
+      </tr>`).join('')}
+      </tbody></table>`}
+    </div>
+  `);
+}
+
+function formCliente(id=null){
+  const c = id ? clientes.find(x=>x.id===id) : {};
+  openModal(id?'Editar cliente':'Novo cliente', `
+    <div class="modal-section">Dados pessoais</div>
+    <div class="fg"><label>Nome completo *</label><input id="f-nome" value="${c.nome_completo||''}" placeholder="Nome completo do responsável"></div>
+    <div class="frow">
+      <div class="fg"><label>CPF</label><input id="f-cpf" value="${c.cpf||''}" placeholder="00000000000" maxlength="11"></div>
+      <div class="fg"><label>Status</label><select id="f-status">
+        <option value="lead" ${c.status==='lead'?'selected':''}>Lead</option>
+        <option value="ativo" ${c.status==='ativo'?'selected':''}>Ativo</option>
+        <option value="inativo" ${c.status==='inativo'?'selected':''}>Inativo</option>
+      </select></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>E-mail</label><input id="f-email" type="email" value="${c.email||''}" placeholder="email@empresa.com"></div>
+      <div class="fg"><label>WhatsApp principal</label><input id="f-wpp" value="${c.whatsapp||''}" placeholder="53999999999"></div>
+    </div>
+
+    <div class="modal-section" style="margin-top:8px">Empresa</div>
+    <div class="frow">
+      <div class="fg"><label>Nome da empresa</label><input id="f-empresa" value="${c.empresa||''}" placeholder="Razão social ou nome fantasia"></div>
+      <div class="fg"><label>CNPJ</label><input id="f-cnpj" value="${c.cnpj||''}" placeholder="00000000000000" maxlength="14"></div>
+    </div>
+    <div class="fg"><label>WhatsApp financeiro</label><input id="f-wpp-fin" value="${c.whatsapp_financeiro||''}" placeholder="53999999999"></div>
+
+    <div class="modal-section" style="margin-top:8px">Endereço</div>
+    <div class="fg"><label>Logradouro</label><input id="f-rua" value="${c.endereco_rua||''}" placeholder="Rua, Av., número"></div>
+    <div class="frow3">
+      <div class="fg"><label>Bairro</label><input id="f-bairro" value="${c.endereco_bairro||''}" placeholder="Bairro"></div>
+      <div class="fg"><label>Cidade</label><input id="f-cidade" value="${c.endereco_cidade||''}" placeholder="Cidade"></div>
+      <div class="fg"><label>UF</label><input id="f-uf" value="${c.endereco_uf||''}" placeholder="RS" maxlength="2" style="text-transform:uppercase"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>CEP</label><input id="f-cep" value="${c.endereco_cep||''}" placeholder="00000-000" maxlength="9"></div>
+      <div class="fg"><label>Complemento</label><input id="f-compl" value="${c.endereco_complemento||''}" placeholder="Apto, Sala…"></div>
+    </div>
+
+    <div class="modal-section" style="margin-top:8px">Observações</div>
+    <div class="fg"><textarea id="f-notas" placeholder="Notas internas sobre o cliente…">${c.notas||''}</textarea></div>
+  `,`
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    ${id?`<button class="btn btn-danger btn-sm" onclick="delCliente('${id}')">Excluir</button>`:''}
+    <button class="btn btn-primary" onclick="saveCliente('${id||''}')">Salvar cliente</button>
+  `);
+}
+
+async function saveCliente(id){
+  const nome = v('f-nome').trim();
+  if(!nome){ toast('Nome completo é obrigatório','er'); return; }
+  const payload = {
+    nome_completo: nome,
+    cpf: v('f-cpf').replace(/\D/g,'')||null,
+    email: v('f-email')||null,
+    whatsapp: v('f-wpp')||null,
+    empresa: v('f-empresa')||null,
+    cnpj: v('f-cnpj').replace(/\D/g,'')||null,
+    whatsapp_financeiro: v('f-wpp-fin')||null,
+    endereco_rua: v('f-rua')||null,
+    endereco_bairro: v('f-bairro')||null,
+    endereco_cidade: v('f-cidade')||null,
+    endereco_uf: v('f-uf').toUpperCase()||null,
+    endereco_cep: v('f-cep')||null,
+    endereco_complemento: v('f-compl')||null,
+    notas: v('f-notas')||null,
+    status: document.getElementById('f-status')?.value||'ativo',
+  };
+  const {error} = id
+    ? await db.from('clientes').update(payload).eq('id',id)
+    : await db.from('clientes').insert(payload);
+  if(error){ toast('Erro: '+error.message,'er'); return; }
+  toast(id?'Cliente atualizado':'Cliente criado');
+  closeModal(); renderClientes();
+}
+
+async function delCliente(id){
+  if(!confirm('Excluir este cliente? Todos os dados relacionados serão removidos.')) return;
+  await db.from('clientes').delete().eq('id',id);
+  toast('Cliente removido'); closeModal(); renderClientes();
+}
+
+// ── PROJETOS (ADMIN) ──────────────────────────────────────────────
+async function renderProjetos(){
+  const [rp,rc] = await Promise.all([db.from('projetos').select('*').order('created_at',{ascending:false}),db.from('clientes').select('id,nome_completo,empresa')]);
+  projetos=rp.data||[]; clientes=rc.data||[];
+  const cols = [{k:'briefing',l:'Briefing'},{k:'em_andamento',l:'Em andamento'},{k:'revisao',l:'Revisão'},{k:'aprovado',l:'Aprovado'},{k:'entregue',l:'Entregue'}];
+  setActions(`<button class="btn btn-primary" onclick="formProjeto()">+ Novo projeto</button>`);
+  setContent(`
+    <div class="kanban" style="margin-bottom:22px">
+      ${cols.map(col=>{
+        const cards = projetos.filter(p=>p.status===col.k);
+        return `<div class="k-col"><div class="k-col-head"><span class="k-col-label">${col.l}</span><span class="k-count">${cards.length}</span></div>${cards.length===0?'<div class="k-empty">—</div>':cards.map(p=>{const cl=clientes.find(c=>c.id===p.cliente_id);return`<div class="k-card" onclick="formProjeto('${p.id}')"><div class="k-card-name">${p.titulo}</div><div class="k-card-client">${cl?.nome_completo||'Sem cliente'}</div>${p.prazo?`<div class="k-card-date">${D(p.prazo)}</div>`:''}${p.valor?`<div class="k-card-val">${R(p.valor)}</div>`:''}</div>`;}).join('')}</div>`;
+      }).join('')}
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">Todos os projetos</span></div>
+      ${projetos.length===0?'<div class="empty"><p>Nenhum projeto ainda</p></div>':`<table><thead><tr><th>Projeto</th><th>Cliente</th><th>Status</th><th>Valor</th><th>Prazo</th><th></th></tr></thead><tbody>${projetos.map(p=>{const cl=clientes.find(c=>c.id===p.cliente_id);return`<tr><td style="font-weight:500">${p.titulo}</td><td style="color:var(--ink2)">${cl?.nome_completo||'—'}</td><td>${badge(p.status)}</td><td style="color:var(--green);font-weight:500">${R(p.valor)}</td><td style="color:var(--ink3);font-size:12.5px">${D(p.prazo)}</td><td style="white-space:nowrap"><button class="act" onclick="formProjeto('${p.id}')">✎</button><button class="act del" onclick="delProjeto('${p.id}')">✕</button></td></tr>`;}).join('')}</tbody></table>`}
+    </div>
+  `);
+}
+
+function formProjeto(id=null){
+  const p = id ? projetos.find(x=>x.id===id) : {};
+  const ST = ['briefing','em_andamento','revisao','aprovado','entregue','pausado'];
+  const SL = ['Briefing','Em andamento','Revisão','Aprovado','Entregue','Pausado'];
+  openModal(id?'Editar projeto':'Novo projeto',`
+    <div class="fg"><label>Título *</label><input id="ft" value="${p.titulo||''}"></div>
+    <div class="frow">
+      <div class="fg"><label>Cliente</label><select id="fc"><option value="">Sem cliente</option>${clientes.map(c=>`<option value="${c.id}" ${c.id===p.cliente_id?'selected':''}>${c.nome_completo}</option>`).join('')}</select></div>
+      <div class="fg"><label>Status</label><select id="fs">${ST.map((s,i)=>`<option value="${s}" ${p.status===s?'selected':''}>${SL[i]}</option>`).join('')}</select></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Valor (R$)</label><input id="fv" type="number" step="0.01" value="${p.valor||''}"></div>
+      <div class="fg"><label>Prazo</label><input id="fp" type="date" value="${p.prazo||''}"></div>
+    </div>
+    <div class="fg"><label>Descrição</label><textarea id="fd">${p.descricao||''}</textarea></div>
+  `,`
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    ${id?`<button class="btn btn-danger btn-sm" onclick="delProjeto('${id}')">Excluir</button>`:''}
+    <button class="btn btn-primary" onclick="saveProjeto('${id||''}')">Salvar</button>
+  `);
+}
+async function saveProjeto(id){
+  const titulo = v('ft').trim();
+  if(!titulo){ toast('Título obrigatório','er'); return; }
+  const payload = {titulo,cliente_id:v('fc')||null,status:document.getElementById('fs')?.value||'briefing',valor:parseFloat(v('fv'))||null,prazo:v('fp')||null,descricao:v('fd')||null};
+  const {error} = id ? await db.from('projetos').update(payload).eq('id',id) : await db.from('projetos').insert(payload);
+  if(error){ toast('Erro: '+error.message,'er'); return; }
+  toast(id?'Projeto atualizado':'Projeto criado'); closeModal(); renderProjetos();
+}
+async function delProjeto(id){
+  if(!confirm('Excluir este projeto?')) return;
+  await db.from('projetos').delete().eq('id',id);
+  toast('Projeto removido'); closeModal(); renderProjetos();
+}
+
+// ── FINANCEIRO (ADMIN) ────────────────────────────────────────────
+async function renderFin(){
+  const [rf,rc] = await Promise.all([db.from('financeiro').select('*').order('created_at',{ascending:false}),db.from('clientes').select('id,nome_completo')]);
+  financeiro=rf.data||[]; clientes=rc.data||[];
+  const rec = financeiro.filter(x=>x.tipo==='receita').reduce((a,b)=>a+(b.valor||0),0);
+  const des = financeiro.filter(x=>x.tipo==='despesa').reduce((a,b)=>a+(b.valor||0),0);
+  setActions(`<button class="btn btn-primary" onclick="formFin()">+ Novo lançamento</button>`);
+  setContent(`
+    <div class="fin-strip">
+      <div class="fin-block"><div class="fin-lbl">Receitas</div><div class="fin-num r">${R(rec)}</div></div>
+      <div class="fin-block"><div class="fin-lbl">Despesas</div><div class="fin-num d">${R(des)}</div></div>
+      <div class="fin-block"><div class="fin-lbl">Saldo</div><div class="fin-num s">${R(rec-des)}</div></div>
+    </div>
+    <div class="card">
+      ${financeiro.length===0?'<div class="empty"><p>Nenhum lançamento ainda</p></div>':`<table><thead><tr><th>Descrição</th><th>Cliente</th><th>Tipo</th><th>Valor</th><th>Vencimento</th><th>Status</th><th></th></tr></thead><tbody>${financeiro.map(f=>{const cl=clientes.find(c=>c.id===f.cliente_id);return`<tr><td style="font-weight:500">${f.descricao}</td><td style="color:var(--ink2)">${cl?.nome_completo||'—'}</td><td><span style="font-size:11.5px;color:${f.tipo==='receita'?'var(--green)':'var(--red)'}">${f.tipo==='receita'?'▲ Receita':'▼ Despesa'}</span></td><td style="color:${f.tipo==='receita'?'var(--green)':'var(--red)'};font-weight:500">${R(f.valor)}</td><td style="color:var(--ink3);font-size:12.5px">${D(f.vencimento)}</td><td>${badge(f.status)}</td><td style="white-space:nowrap"><button class="act" onclick="formFin('${f.id}')">✎</button><button class="act del" onclick="delFin('${f.id}')">✕</button></td></tr>`;}).join('')}</tbody></table>`}
+    </div>
+  `);
+}
+function formFin(id=null){
+  const f = id ? financeiro.find(x=>x.id===id) : {};
+  openModal(id?'Editar lançamento':'Novo lançamento',`
+    <div class="fg"><label>Descrição *</label><input id="fd" value="${f.descricao||''}"></div>
+    <div class="frow">
+      <div class="fg"><label>Tipo</label><select id="ft"><option value="receita" ${f.tipo==='receita'?'selected':''}>Receita</option><option value="despesa" ${f.tipo==='despesa'?'selected':''}>Despesa</option></select></div>
+      <div class="fg"><label>Valor (R$) *</label><input id="fv" type="number" step="0.01" value="${f.valor||''}"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Cliente</label><select id="fc"><option value="">Sem cliente</option>${clientes.map(c=>`<option value="${c.id}" ${c.id===f.cliente_id?'selected':''}>${c.nome_completo}</option>`).join('')}</select></div>
+      <div class="fg"><label>Status</label><select id="fs">${['pendente','pago','atrasado','cancelado'].map(s=>`<option value="${s}" ${f.status===s?'selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('')}</select></div>
+    </div>
+    <div class="fg"><label>Vencimento</label><input id="fvc" type="date" value="${f.vencimento||''}"></div>
+  `,`
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    ${id?`<button class="btn btn-danger btn-sm" onclick="delFin('${id}')">Excluir</button>`:''}
+    <button class="btn btn-primary" onclick="saveFin('${id||''}')">Salvar</button>
+  `);
+}
+async function saveFin(id){
+  const desc = v('fd').trim(); const valor = parseFloat(v('fv'));
+  if(!desc||!valor){ toast('Descrição e valor são obrigatórios','er'); return; }
+  const payload = {descricao:desc,valor,tipo:document.getElementById('ft')?.value||'receita',cliente_id:v('fc')||null,status:document.getElementById('fs')?.value||'pendente',vencimento:v('fvc')||null};
+  const {error} = id ? await db.from('financeiro').update(payload).eq('id',id) : await db.from('financeiro').insert(payload);
+  if(error){ toast('Erro: '+error.message,'er'); return; }
+  toast(id?'Lançamento atualizado':'Lançamento criado'); closeModal(); renderFin();
+}
+async function delFin(id){
+  if(!confirm('Excluir este lançamento?')) return;
+  await db.from('financeiro').delete().eq('id',id);
+  toast('Removido'); closeModal(); renderFin();
+}
+
+// ── PROPOSTAS (ADMIN) ─────────────────────────────────────────────
+async function renderPropostas(){
+  const [rp,rc] = await Promise.all([db.from('propostas').select('*').order('created_at',{ascending:false}),db.from('clientes').select('id,nome_completo')]);
+  propostas=rp.data||[]; clientes=rc.data||[];
+  setActions(`<button class="btn btn-primary" onclick="formProposta()">+ Nova proposta</button>`);
+  setContent(`
+    <div class="card">
+      ${propostas.length===0?'<div class="empty"><p>Nenhuma proposta ainda</p></div>':`<table><thead><tr><th>Título</th><th>Cliente</th><th>Valor</th><th>Status</th><th>Data</th><th></th></tr></thead><tbody>${propostas.map(p=>{const cl=clientes.find(c=>c.id===p.cliente_id);return`<tr><td style="font-weight:500">${p.titulo}</td><td style="color:var(--ink2)">${cl?.nome_completo||'—'}</td><td style="color:var(--green);font-weight:500">${R(p.valor)}</td><td>${badge(p.status)}</td><td style="color:var(--ink3);font-size:12.5px">${new Date(p.created_at).toLocaleDateString('pt-BR')}</td><td style="white-space:nowrap"><button class="act" onclick="formProposta('${p.id}')">✎</button><button class="act del" onclick="delProposta('${p.id}')">✕</button></td></tr>`;}).join('')}</tbody></table>`}
+    </div>
+  `);
+}
+function formProposta(id=null){
+  const p = id ? propostas.find(x=>x.id===id) : {};
+  openModal(id?'Editar proposta':'Nova proposta',`
+    <div class="fg"><label>Título *</label><input id="ft" value="${p.titulo||''}"></div>
+    <div class="frow">
+      <div class="fg"><label>Cliente</label><select id="fc"><option value="">Sem cliente</option>${clientes.map(c=>`<option value="${c.id}" ${c.id===p.cliente_id?'selected':''}>${c.nome_completo}</option>`).join('')}</select></div>
+      <div class="fg"><label>Valor (R$)</label><input id="fv" type="number" step="0.01" value="${p.valor||''}"></div>
+    </div>
+    <div class="fg"><label>Status</label><select id="fs">${['rascunho','enviada','aprovada','recusada'].map(s=>`<option value="${s}" ${p.status===s?'selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('')}</select></div>
+    <div class="fg"><label>Notas</label><textarea id="fn">${p.notas||''}</textarea></div>
+  `,`
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    ${id?`<button class="btn btn-danger btn-sm" onclick="delProposta('${id}')">Excluir</button>`:''}
+    <button class="btn btn-primary" onclick="saveProposta('${id||''}')">Salvar</button>
+  `);
+}
+async function saveProposta(id){
+  const titulo = v('ft').trim();
+  if(!titulo){ toast('Título obrigatório','er'); return; }
+  const payload = {titulo,cliente_id:v('fc')||null,valor:parseFloat(v('fv'))||null,status:document.getElementById('fs')?.value||'rascunho',notas:v('fn')||null};
+  const {error} = id ? await db.from('propostas').update(payload).eq('id',id) : await db.from('propostas').insert(payload);
+  if(error){ toast('Erro: '+error.message,'er'); return; }
+  toast(id?'Proposta atualizada':'Proposta criada'); closeModal(); renderPropostas();
+}
+async function delProposta(id){
+  if(!confirm('Excluir esta proposta?')) return;
+  await db.from('propostas').delete().eq('id',id);
+  toast('Removida'); closeModal(); renderPropostas();
+}
+
+// ── USUÁRIOS (ADMIN) ──────────────────────────────────────────────
+async function renderUsuarios(){
+  const {data: profiles} = await db.from('profiles').select('*, clientes(nome_completo)').order('created_at',{ascending:false});
+  const {data: cls} = await db.from('clientes').select('id,nome_completo');
+  clientes = cls||[];
+  const lista = profiles||[];
+  setActions(`<button class="btn btn-primary" onclick="formNovoUsuario()">+ Criar acesso</button>`);
+  setContent(`
+    <div class="card">
+      <div class="card-head"><span class="card-title">Acessos ao sistema</span></div>
+      ${lista.length===0?'<div class="empty"><p>Nenhum usuário ainda</p></div>':`
+      <table><thead><tr><th>E-mail</th><th>Perfil</th><th>Cliente vinculado</th><th>Criado em</th><th></th></tr></thead><tbody>
+      ${lista.map(u=>`<tr>
+        <td style="font-weight:500">${u.email||'—'}</td>
+        <td>${u.role==='admin'?'<span class="badge badge-admin">Admin</span>':'<span class="badge badge-cliente">Cliente</span>'}</td>
+        <td style="color:var(--ink2)">${u.clientes?.nome_completo||'—'}</td>
+        <td style="color:var(--ink3);font-size:12.5px">${new Date(u.created_at).toLocaleDateString('pt-BR')}</td>
+        <td>${u.role!=='admin'?`<button class="act del" onclick="delUsuario('${u.id}')">✕</button>`:''}</td>
+      </tr>`).join('')}
+      </tbody></table>`}
+    </div>
+  `);
+}
+
+function formNovoUsuario(){
+  const {data: cls} = db.from('clientes').select('id,nome_completo'); // só pra sintaxe
+  openModal('Criar acesso', `
+    <div style="font-size:13px;color:var(--ink2);margin-bottom:4px">Cria uma conta de acesso ao sistema. O cliente receberá um e-mail para definir sua senha.</div>
+    <div class="fg"><label>E-mail *</label><input id="nu-email" type="email" placeholder="email@cliente.com"></div>
+    <div class="fg"><label>Perfil</label>
+      <select id="nu-role" onchange="toggleClienteSelect()">
+        <option value="cliente">Cliente</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+    <div class="fg" id="nu-cliente-wrap"><label>Vincular ao cliente</label>
+      <select id="nu-cliente"><option value="">Selecionar cliente…</option>${clientes.map(c=>`<option value="${c.id}">${c.nome_completo}</option>`).join('')}</select>
+    </div>
+    <div class="fg"><label>Senha inicial *</label><input id="nu-senha" type="password" placeholder="Mínimo 6 caracteres"></div>
+  `,`
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="criarUsuario()">Criar acesso</button>
+  `);
+  // carrega clientes no select
+  db.from('clientes').select('id,nome_completo').then(({data})=>{
+    const sel = document.getElementById('nu-cliente');
+    if(sel && data) data.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.nome_completo;sel.appendChild(o);});
+  });
+}
+
+function toggleClienteSelect(){
+  const role = document.getElementById('nu-role')?.value;
+  const wrap = document.getElementById('nu-cliente-wrap');
+  if(wrap) wrap.style.display = role==='admin' ? 'none' : '';
+}
+
+async function criarUsuario(){
+  const email = v('nu-email').trim();
+  const senha = v('nu-senha');
+  const role  = document.getElementById('nu-role')?.value||'cliente';
+  const clienteId = v('nu-cliente')||null;
+  if(!email||!senha){ toast('E-mail e senha são obrigatórios','er'); return; }
+  if(senha.length < 6){ toast('Senha deve ter pelo menos 6 caracteres','er'); return; }
+
+  // Cria usuário via Admin API — aqui usamos signUp pois a anon key permite
+  const {data, error} = await db.auth.signUp({email, password: senha, options:{emailRedirectTo: location.href}});
+  if(error){ toast('Erro: '+error.message,'er'); return; }
+
+  // Cria perfil
+  const uid = data.user?.id;
+  if(uid){
+    await db.from('profiles').upsert({id:uid, email, role, cliente_id: clienteId, created_at: new Date().toISOString()});
+  }
+  toast('Acesso criado! O usuário já pode entrar.'); closeModal(); renderUsuarios();
+}
+
+async function delUsuario(id){
+  if(!confirm('Remover este acesso?')) return;
+  await db.from('profiles').delete().eq('id',id);
+  toast('Acesso removido'); renderUsuarios();
+}
+
+// ── PORTAL DO CLIENTE ─────────────────────────────────────────────
+async function goPortal(){
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  document.querySelector('.nav-item')?.classList.add('active');
+  document.getElementById('page-title').textContent = 'Minha conta';
+  setActions(''); setContent('<div class="loading">Carregando…</div>');
+  if(!currentClienteId){ setContent('<div class="empty"><p>Sua conta ainda não foi vinculada a um cliente. Entre em contato com a 5essência.</p></div>'); return; }
+  const [{data:cl},{data:prj},{data:fin}] = await Promise.all([
+    db.from('clientes').select('*').eq('id',currentClienteId).single(),
+    db.from('projetos').select('*').eq('cliente_id',currentClienteId).order('created_at',{ascending:false}),
+    db.from('financeiro').select('*').eq('cliente_id',currentClienteId).order('created_at',{ascending:false}),
+  ]);
+  const c = cl||{};
+  const pend = (fin||[]).filter(x=>x.status==='pendente').reduce((a,b)=>a+(b.valor||0),0);
+  setContent(`
+    <div class="portal-header">
+      <div class="portal-name">${c.nome_completo||'—'}</div>
+      <div class="portal-meta">${c.empresa||''} ${c.cnpj?'· CNPJ '+fmtCNPJ(c.cnpj):''}</div>
+    </div>
+    <div class="info-grid">
+      <div class="info-block"><div class="info-lbl">E-mail</div><div class="info-val">${c.email||'—'}</div></div>
+      <div class="info-block"><div class="info-lbl">WhatsApp</div><div class="info-val">${c.whatsapp||'—'}</div></div>
+      <div class="info-block"><div class="info-lbl">CPF</div><div class="info-val">${fmtCPF(c.cpf)}</div></div>
+      <div class="info-block"><div class="info-lbl">Endereço</div><div class="info-val">${c.endereco_rua?`${c.endereco_rua}, ${c.endereco_cidade||''} - ${c.endereco_uf||''}`:'—'}</div></div>
+      <div class="info-block"><div class="info-lbl">WhatsApp financeiro</div><div class="info-val">${c.whatsapp_financeiro||'—'}</div></div>
+      <div class="info-block"><div class="info-lbl">A pagar</div><div class="info-val" style="color:var(--amber)">${R(pend)}</div></div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-head"><span class="card-title">Meus projetos</span></div>
+        ${!prj||prj.length===0?'<div class="empty"><p>Nenhum projeto ainda</p></div>':`<table><thead><tr><th>Projeto</th><th>Status</th><th>Prazo</th></tr></thead><tbody>${prj.map(p=>`<tr><td style="font-weight:500">${p.titulo}</td><td>${badge(p.status)}</td><td style="color:var(--ink3);font-size:12.5px">${D(p.prazo)}</td></tr>`).join('')}</tbody></table>`}
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Financeiro</span></div>
+        ${!fin||fin.length===0?'<div class="empty"><p>Nenhum lançamento ainda</p></div>':`<table><thead><tr><th>Descrição</th><th>Valor</th><th>Vencimento</th><th>Status</th></tr></thead><tbody>${fin.map(f=>`<tr><td>${f.descricao}</td><td style="color:${f.tipo==='receita'?'var(--green)':'var(--ink)'};font-weight:500">${R(f.valor)}</td><td style="color:var(--ink3);font-size:12.5px">${D(f.vencimento)}</td><td>${badge(f.status)}</td></tr>`).join('')}</tbody></table>`}
+      </div>
+    </div>
+  `);
+}
+
+async function goPortalProjetos(){
+  document.getElementById('page-title').textContent = 'Meus projetos';
+  setActions(''); setContent('<div class="loading">Carregando…</div>');
+  const {data} = await db.from('projetos').select('*').eq('cliente_id',currentClienteId).order('created_at',{ascending:false});
+  setContent(`<div class="card">${!data||data.length===0?'<div class="empty"><p>Nenhum projeto ainda</p></div>':`<table><thead><tr><th>Projeto</th><th>Status</th><th>Valor</th><th>Prazo</th><th>Descrição</th></tr></thead><tbody>${data.map(p=>`<tr><td style="font-weight:500">${p.titulo}</td><td>${badge(p.status)}</td><td style="color:var(--green);font-weight:500">${R(p.valor)}</td><td style="color:var(--ink3)">${D(p.prazo)}</td><td style="color:var(--ink2);font-size:12.5px">${p.descricao||'—'}</td></tr>`).join('')}</tbody></table>`}</div>`);
+}
+
+async function goPortalFinanceiro(){
+  document.getElementById('page-title').textContent = 'Financeiro';
+  setActions(''); setContent('<div class="loading">Carregando…</div>');
+  const {data} = await db.from('financeiro').select('*').eq('cliente_id',currentClienteId).order('created_at',{ascending:false});
+  const pend = (data||[]).filter(x=>x.status==='pendente').reduce((a,b)=>a+(b.valor||0),0);
+  const pago = (data||[]).filter(x=>x.status==='pago').reduce((a,b)=>a+(b.valor||0),0);
+  setContent(`
+    <div class="fin-strip">
+      <div class="fin-block"><div class="fin-lbl">Total pago</div><div class="fin-num r">${R(pago)}</div></div>
+      <div class="fin-block"><div class="fin-lbl">Pendente</div><div class="fin-num" style="color:var(--amber)">${R(pend)}</div></div>
+      <div class="fin-block"><div class="fin-lbl">Lançamentos</div><div class="fin-num s">${(data||[]).length}</div></div>
+    </div>
+    <div class="card">${!data||data.length===0?'<div class="empty"><p>Nenhum lançamento ainda</p></div>':`<table><thead><tr><th>Descrição</th><th>Valor</th><th>Vencimento</th><th>Status</th></tr></thead><tbody>${data.map(f=>`<tr><td style="font-weight:500">${f.descricao}</td><td style="color:${f.tipo==='receita'?'var(--green)':'var(--ink)'};font-weight:500">${R(f.valor)}</td><td style="color:var(--ink3)">${D(f.vencimento)}</td><td>${badge(f.status)}</td></tr>`).join('')}</tbody></table>`}</div>
+  `);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+db.auth.getSession().then(({data:{session}})=>{
+  if(session?.user) initSession(session.user);
+});
+</script>
+</body>
+</html>

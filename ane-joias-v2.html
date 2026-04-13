@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Ane Joias — Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --bg: #0c0c0f;
+  --bg2: #111115;
+  --sur: #16161b;
+  --sur2: #1c1c23;
+  --sur3: #222229;
+  --brd: #2a2a35;
+  --brd2: #333340;
+  --gold: #d4a843;
+  --gold2: #e8c06a;
+  --gold3: #f5d98a;
+  --gdim: rgba(212,168,67,0.10);
+  --gglow: rgba(212,168,67,0.05);
+  --gline: rgba(212,168,67,0.22);
+  --wh: #f0ede8;
+  --off: #b8b4aa;
+  --gr: #6b6870;
+  --gr2: #3a3840;
+  --red: #e05555;
+  --red2: rgba(224,85,85,0.12);
+  --green: #4caf7d;
+  --green2: rgba(76,175,125,0.12);
+  --blue: #5b8dee;
+  --blue2: rgba(91,141,238,0.12);
+  --fs: 'Playfair Display', serif;
+  --fm: 'DM Sans', sans-serif;
+  --nav: 60px;
+  --top: 52px;
+  --radius: 12px;
+  --radius2: 8px;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { height:100%; overflow-x:hidden; }
+body { background:var(--bg); color:var(--wh); font-family:var(--fm); min-height:100vh; }
+
+/* NOISE TEXTURE */
+body::after {
+  content:''; position:fixed; inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none; z-index:0; opacity:0.4;
+}
+
+body::before {
+  content:''; position:fixed; inset:0;
+  background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(212,168,67,0.08) 0%, transparent 60%),
+              radial-gradient(ellipse 50% 40% at 100% 100%, rgba(91,141,238,0.04) 0%, transparent 50%);
+  pointer-events:none; z-index:0;
+}
+
+.screen { display:none; position:relative; z-index:1; min-height:100vh; }
+.screen.active { display:flex; }
+
+/* ══════════════════════════════
+   LOGIN
+══════════════════════════════ */
+#s-login { align-items:center; justify-content:center; padding:24px 20px; flex-direction:column; }
+
+.lbox {
+  width:100%; max-width:380px;
+  background:var(--sur);
+  border:1px solid var(--brd2);
+  border-radius:var(--radius);
+  padding:40px 28px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03);
+}
+
+.llogo { text-align:center; margin-bottom:32px; }
+.lbrand {
+  font-family:var(--fs); font-size:38px; font-weight:400;
+  letter-spacing:3px; color:var(--gold2); display:block; line-height:1;
+}
+.lbrand em { font-style:italic; color:var(--gold3); }
+.lsub { font-size:8px; letter-spacing:5px; text-transform:uppercase; color:var(--gr); margin-top:8px; display:block; }
+
+.ldiv { display:flex; align-items:center; gap:12px; margin-bottom:24px; }
+.ldiv::before,.ldiv::after { content:''; flex:1; height:1px; background:var(--brd2); }
+.ldiv span { color:var(--gold); font-size:12px; }
+
+.fg { margin-bottom:14px; }
+label { display:block; font-size:10px; font-weight:500; letter-spacing:1px; color:var(--gr); margin-bottom:6px; }
+
+input, select, textarea {
+  width:100%; background:var(--sur2);
+  border:1px solid var(--brd);
+  color:var(--wh); font-family:var(--fm);
+  font-size:16px; font-weight:400;
+  padding:12px 14px; outline:none;
+  transition:all 0.2s;
+  border-radius:var(--radius2);
+  -webkit-appearance:none;
+}
+input:focus, select:focus, textarea:focus {
+  border-color:var(--gold);
+  background:var(--sur3);
+  box-shadow:0 0 0 3px rgba(212,168,67,0.08);
+}
+input::placeholder { color:var(--gr2); }
+select option { background:var(--sur); }
+textarea { font-size:14px; resize:none; }
+
+.bgold {
+  width:100%; padding:14px;
+  background:linear-gradient(135deg, var(--gold), var(--gold2));
+  border:none; color:#0c0c0f;
+  font-family:var(--fm); font-size:13px; font-weight:600;
+  letter-spacing:1px; cursor:pointer;
+  transition:all 0.3s; margin-top:4px;
+  border-radius:var(--radius2);
+}
+.bgold:active { transform:scale(0.98); opacity:0.9; }
+
+.lswitch { text-align:center; margin-top:14px; font-size:12px; color:var(--gr); }
+.lswitch a { color:var(--gold2); cursor:pointer; font-weight:500; }
+
+/* ══════════════════════════════
+   ADMIN LAYOUT
+══════════════════════════════ */
+#s-admin { flex-direction:column; min-height:100vh; }
+
+.topbar {
+  background:var(--sur); border-bottom:1px solid var(--brd);
+  padding:0 20px; height:var(--top);
+  display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; z-index:40;
+  backdrop-filter:blur(12px);
+  background:rgba(22,22,27,0.92);
+}
+.topbar-brand { font-family:var(--fs); font-size:20px; font-weight:400; letter-spacing:2px; color:var(--gold2); }
+.topbar-brand em { font-style:italic; color:var(--gold3); }
+.topbar-right { display:flex; align-items:center; gap:10px; }
+.topbar-email { font-size:10px; color:var(--gr); max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:none; }
+.bsair {
+  font-size:11px; color:var(--gr); cursor:pointer; background:var(--sur2);
+  border:1px solid var(--brd); padding:6px 14px;
+  font-family:var(--fm); font-weight:500;
+  border-radius:20px; transition:all 0.2s;
+}
+.bsair:active { color:var(--gold2); border-color:var(--gline); }
+
+.amain { flex:1; padding-bottom:calc(var(--nav) + 20px); overflow-y:auto; }
+.asec { display:none; padding:16px; }
+.asec.active { display:block; }
+
+/* BOTTOM NAV */
+.botnav {
+  position:fixed; bottom:0; left:0; right:0; height:var(--nav);
+  background:rgba(22,22,27,0.95);
+  border-top:1px solid var(--brd);
+  display:flex; z-index:40;
+  backdrop-filter:blur(20px);
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.bni {
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:3px; cursor:pointer;
+  color:var(--gr); transition:color 0.2s; padding:8px 4px;
+  position:relative;
+}
+.bni.active { color:var(--gold2); }
+.bni-icon { font-size:22px; line-height:1; transition:transform 0.2s; }
+.bni.active .bni-icon { transform:scale(1.1); }
+.bni-lbl { font-size:9px; letter-spacing:0.5px; font-weight:500; }
+.bni-pip {
+  position:absolute; top:6px; right:calc(50% - 14px);
+  width:5px; height:5px; border-radius:50%;
+  background:var(--gold); opacity:0;
+  transition:opacity 0.2s;
+}
+.bni.active .bni-pip { opacity:1; }
+
+/* FAB */
+.fab {
+  position:fixed; bottom:calc(var(--nav) + 14px); right:16px;
+  width:50px; height:50px;
+  background:linear-gradient(135deg, var(--gold), var(--gold2));
+  border:none; border-radius:50%;
+  color:#0c0c0f; font-size:24px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 4px 20px rgba(212,168,67,0.35);
+  z-index:39; transition:transform 0.2s;
+  font-weight:300;
+}
+.fab:active { transform:scale(0.92); }
+
+/* ══════════════════════════════
+   STATS
+══════════════════════════════ */
+.sg { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px; }
+.sc {
+  background:var(--sur); border:1px solid var(--brd);
+  border-radius:var(--radius); padding:16px;
+  position:relative; overflow:hidden;
+}
+.sc-accent { position:absolute; top:0; left:0; right:0; height:2px; }
+.sc-accent.gold { background:linear-gradient(90deg, var(--gold), var(--gold2)); }
+.sc-accent.green { background:linear-gradient(90deg, var(--green), #6fcf97); }
+.sc-accent.blue { background:linear-gradient(90deg, var(--blue), #7eb3f5); }
+.sc-accent.red { background:linear-gradient(90deg, var(--red), #f07070); }
+.sl { font-size:9px; font-weight:500; letter-spacing:0.5px; color:var(--gr); margin-bottom:6px; }
+.sv { font-family:var(--fs); font-size:22px; font-weight:600; color:var(--gold2); line-height:1; }
+.sv.green { color:var(--green); }
+.sv.red { color:var(--red); }
+.sv.blue { color:var(--blue); }
+
+/* MÊS SELECTOR */
+.mes-selector {
+  display:flex; align-items:center; gap:10px;
+  margin-bottom:16px; background:var(--sur);
+  border:1px solid var(--brd); border-radius:var(--radius2);
+  padding:10px 14px;
+}
+.mes-selector label { font-size:10px; color:var(--gr); margin:0; white-space:nowrap; }
+.mes-selector select { background:transparent; border:none; color:var(--gold2); font-size:13px; font-weight:500; padding:0; width:auto; box-shadow:none; }
+.mes-selector select:focus { box-shadow:none; background:transparent; }
+
+/* ══════════════════════════════
+   CARDS
+══════════════════════════════ */
+.card-list { display:flex; flex-direction:column; gap:10px; }
+
+.card {
+  background:var(--sur); border:1px solid var(--brd);
+  border-radius:var(--radius); padding:16px;
+  position:relative; overflow:hidden;
+  transition:border-color 0.2s;
+}
+.card:active { border-color:var(--brd2); }
+.card-stripe {
+  position:absolute; left:0; top:0; bottom:0; width:3px;
+  border-radius:3px 0 0 3px;
+}
+.card-stripe.gold { background:var(--gold); }
+.card-stripe.green { background:var(--green); }
+.card-stripe.red { background:var(--red); }
+.card-stripe.gray { background:var(--gr2); }
+.card-stripe.blue { background:var(--blue); }
+.card { padding-left:20px; }
+
+.card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:10px; }
+.card-nome { font-family:var(--fs); font-size:17px; font-weight:400; color:var(--wh); line-height:1.2; }
+.card-valor-wrap { text-align:right; flex-shrink:0; }
+.card-valor { font-family:var(--fs); font-size:20px; font-weight:600; color:var(--gold2); display:block; }
+.card-subval { font-size:10px; color:var(--gr); margin-top:1px; }
+
+.card-info { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+.chip {
+  display:inline-flex; align-items:center; gap:4px;
+  background:var(--sur2); border:1px solid var(--brd);
+  border-radius:20px; padding:3px 10px;
+  font-size:10px; color:var(--off); font-weight:400;
+}
+.chip.gold { border-color:var(--gline); color:var(--gold2); background:var(--gdim); }
+.chip.green { border-color:rgba(76,175,125,0.3); color:var(--green); background:var(--green2); }
+.chip.red { border-color:rgba(224,85,85,0.3); color:var(--red); background:var(--red2); }
+.chip.blue { border-color:rgba(91,141,238,0.3); color:var(--blue); background:var(--blue2); }
+
+.card-acts { display:flex; gap:8px; flex-wrap:wrap; padding-top:10px; border-top:1px solid var(--brd); }
+
+/* SEÇÃO HEADER */
+.sec-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.sec-title { font-family:var(--fs); font-size:24px; font-weight:400; color:var(--wh); }
+
+/* BUSCA */
+.sbar { margin-bottom:12px; position:relative; }
+.sbar input { padding-left:36px; font-size:14px; }
+.sbar-icon { position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:14px; color:var(--gr); pointer-events:none; }
+
+/* TABS */
+.tabs { display:flex; border-bottom:1px solid var(--brd); margin-bottom:14px; overflow-x:auto; scrollbar-width:none; gap:4px; }
+.tabs::-webkit-scrollbar { display:none; }
+.tab {
+  flex-shrink:0; padding:10px 16px;
+  font-size:11px; font-weight:500; color:var(--gr);
+  cursor:pointer; border-bottom:2px solid transparent;
+  margin-bottom:-1px; white-space:nowrap; transition:all 0.2s;
+}
+.tab.active { color:var(--gold2); border-bottom-color:var(--gold); }
+
+/* BADGES */
+.badge {
+  display:inline-block; padding:3px 10px;
+  font-size:9px; font-weight:600; letter-spacing:0.5px;
+  border-radius:20px;
+}
+.badge-pago { color:var(--green); background:var(--green2); }
+.badge-pendente { color:var(--gold2); background:var(--gdim); }
+.badge-atrasado { color:var(--red); background:var(--red2); }
+.badge-cancelado { color:var(--gr); background:var(--sur2); }
+.badge-ativo { color:var(--green); background:var(--green2); }
+.badge-inativo { color:var(--gr); background:var(--sur2); }
+
+/* BOTÕES */
+.btn {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:8px 14px; border:1px solid var(--brd2);
+  background:var(--sur2); color:var(--off);
+  font-family:var(--fm); font-size:11px; font-weight:500;
+  cursor:pointer; transition:all 0.2s;
+  border-radius:var(--radius2);
+}
+.btn:active { transform:scale(0.97); }
+.btn-gold { border-color:var(--gline); background:var(--gdim); color:var(--gold2); }
+.btn-gold:active { background:var(--gold); color:#0c0c0f; }
+.btn-green { border-color:rgba(76,175,125,0.3); background:var(--green2); color:var(--green); }
+.btn-green:active { background:var(--green); color:#fff; }
+.btn-red { border-color:rgba(224,85,85,0.3); background:var(--red2); color:var(--red); }
+.btn-red:active { background:var(--red); color:#fff; }
+.btn-wpp { border-color:rgba(37,211,102,0.3); background:rgba(37,211,102,0.08); color:#25d366; }
+.btn-wpp:active { background:#25d366; color:#fff; }
+.btn-full { width:100%; justify-content:center; padding:13px; font-size:13px; }
+.btn-ghost { background:transparent; border-color:var(--brd); color:var(--gr); }
+
+/* PROXIMOS */
+.prox-card {
+  background:var(--sur); border:1px solid var(--brd);
+  border-radius:var(--radius); padding:14px 16px;
+  margin-bottom:10px; display:flex; align-items:center;
+  justify-content:space-between; gap:12px;
+}
+.prox-info { flex:1; min-width:0; }
+.prox-nome { font-size:14px; font-weight:500; color:var(--wh); margin-bottom:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.prox-desc { font-size:11px; color:var(--gr); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.prox-right { text-align:right; flex-shrink:0; }
+.prox-val { font-family:var(--fs); font-size:18px; font-weight:600; color:var(--gold2); display:block; }
+.prox-data { font-size:10px; color:var(--gr); margin-top:2px; }
+
+/* SEÇÃO TITLE DASH */
+.dash-section-title { font-size:10px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--gr); margin:16px 0 10px; }
+
+/* ══════════════════════════════
+   MODAIS
+══════════════════════════════ */
+.mo {
+  position:fixed; inset:0;
+  background:rgba(12,12,15,0.92);
+  z-index:200; display:none;
+  align-items:flex-end; justify-content:center;
+  backdrop-filter:blur(8px);
+}
+.mo.open { display:flex; }
+.md {
+  background:var(--sur); border-top:1px solid var(--brd2);
+  border-radius:var(--radius) var(--radius) 0 0;
+  width:100%; max-height:92vh;
+  overflow-y:auto; position:relative;
+}
+.md-handle {
+  width:36px; height:4px; background:var(--brd2);
+  border-radius:2px; margin:12px auto 0;
+}
+.mh {
+  padding:16px 20px 14px;
+  border-bottom:1px solid var(--brd);
+  display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; background:var(--sur); z-index:1;
+}
+.mt { font-family:var(--fs); font-size:20px; font-weight:400; color:var(--wh); }
+.mx { background:var(--sur2); border:1px solid var(--brd); color:var(--gr); font-size:16px; cursor:pointer; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+.mb { padding:16px 20px; }
+.mf { padding:12px 20px 32px; display:flex; flex-direction:column; gap:8px; }
+.fr { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+/* MODAL LIQUIDAR */
+.liq-modal { max-height:70vh; }
+.liq-info { background:var(--sur2); border:1px solid var(--brd); border-radius:var(--radius2); padding:16px; margin-bottom:16px; }
+.liq-parcela { font-family:var(--fs); font-size:28px; font-weight:600; color:var(--gold2); display:block; margin-bottom:4px; }
+.liq-desc { font-size:12px; color:var(--gr); }
+.liq-opcoes { display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+.liq-opt {
+  display:flex; align-items:center; gap:12px;
+  padding:14px; background:var(--sur2); border:1px solid var(--brd);
+  border-radius:var(--radius2); cursor:pointer; transition:all 0.2s;
+}
+.liq-opt.selected { border-color:var(--gold); background:var(--gdim); }
+.liq-opt-icon { font-size:20px; }
+.liq-opt-txt { flex:1; }
+.liq-opt-label { font-size:13px; font-weight:500; color:var(--wh); }
+.liq-opt-sub { font-size:11px; color:var(--gr); margin-top:1px; }
+.liq-valor-wrap { display:none; }
+.liq-valor-wrap.show { display:block; }
+
+/* ══════════════════════════════
+   TOAST
+══════════════════════════════ */
+.toast {
+  position:fixed; bottom:calc(var(--nav) + 12px); left:16px; right:16px;
+  background:var(--sur2); border:1px solid var(--brd2);
+  color:var(--wh); padding:14px 18px;
+  font-size:13px; font-weight:400; z-index:999;
+  transform:translateY(80px); opacity:0;
+  transition:all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  font-family:var(--fm); text-align:center;
+  border-radius:var(--radius2);
+  box-shadow:0 8px 32px rgba(0,0,0,0.4);
+}
+.toast.show { transform:translateY(0); opacity:1; }
+.toast.err { border-color:rgba(224,85,85,0.4); color:var(--red); }
+.toast.ok { border-color:rgba(76,175,125,0.4); color:var(--green); }
+
+.spin { display:inline-block; width:16px; height:16px; border:2px solid var(--brd); border-top-color:var(--gold); border-radius:50%; animation:rot 0.7s linear infinite; }
+@keyframes rot { to { transform:rotate(360deg); } }
+.empty { text-align:center; padding:48px 20px; color:var(--gr); }
+.empi { font-size:32px; opacity:0.15; margin-bottom:10px; }
+.empt { font-size:11px; letter-spacing:1px; font-weight:500; }
+
+/* ══════════════════════════════
+   PORTAL CLIENTE
+══════════════════════════════ */
+#s-portal { flex-direction:column; min-height:100vh; }
+.ptop {
+  background:rgba(22,22,27,0.95); border-bottom:1px solid var(--brd);
+  padding:0 20px; height:var(--top);
+  display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; z-index:40; backdrop-filter:blur(12px);
+}
+.pbrand { font-family:var(--fs); font-size:20px; font-weight:400; letter-spacing:2px; color:var(--gold2); }
+.pbrand em { font-style:italic; color:var(--gold3); }
+.puser { display:flex; align-items:center; gap:10px; }
+.puser strong { font-size:13px; font-weight:500; color:var(--wh); }
+.pbody { flex:1; padding:20px 16px 40px; }
+.phi { margin-bottom:20px; }
+.phi h1 { font-family:var(--fs); font-size:30px; font-weight:400; color:var(--wh); }
+.phi p { font-size:12px; color:var(--gr); margin-top:4px; }
+
+.alerta {
+  background:linear-gradient(135deg, rgba(212,168,67,0.1), rgba(212,168,67,0.05));
+  border:1px solid var(--gline);
+  border-radius:var(--radius2); padding:12px 16px;
+  margin-bottom:10px; display:flex; align-items:center;
+  gap:10px; font-size:12px; color:var(--gold2); font-weight:500;
+}
+
+/* FATURAS */
+.fcard {
+  background:var(--sur); border:1px solid var(--brd);
+  border-radius:var(--radius); margin-bottom:10px;
+  position:relative; overflow:hidden;
+}
+.fcard-stripe { position:absolute; left:0; top:0; bottom:0; width:3px; }
+.fcard-stripe.gold { background:var(--gold); }
+.fcard-stripe.green { background:var(--green); }
+.fcard-stripe.red { background:var(--red); }
+.fcard-stripe.gray { background:var(--gr2); }
+.fin { padding:16px 16px 16px 20px; }
+.fval { font-family:var(--fs); font-size:28px; font-weight:600; color:var(--gold2); display:block; margin-bottom:4px; }
+.fdesc { font-size:15px; font-weight:500; color:var(--wh); margin-bottom:8px; }
+.fmeta { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+.fst { margin-bottom:10px; }
+.fpix-wrap { display:flex; flex-wrap:wrap; gap:8px; }
+.bpix {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:10px 16px;
+  background:var(--gdim); border:1px solid var(--gline);
+  color:var(--gold2); font-family:var(--fm); font-size:11px;
+  font-weight:500; cursor:pointer; border-radius:var(--radius2);
+  transition:all 0.2s;
+}
+.bpix:active { background:var(--gold); color:#0c0c0f; }
+.multa-aviso {
+  background:var(--red2); border:1px solid rgba(224,85,85,0.25);
+  border-radius:var(--radius2); padding:10px 12px;
+  font-size:11px; color:var(--red); margin-bottom:10px; font-weight:500;
+}
+
+/* PORTAL VAZIO */
+.pvazio { text-align:center; padding:60px 0; }
+.pvazoi { font-size:40px; opacity:0.1; margin-bottom:12px; }
+.pvazt { font-family:var(--fs); font-size:20px; font-weight:400; color:var(--gr); }
+
+/* PIX MODAL */
+.pixmo {
+  position:fixed; inset:0; background:rgba(12,12,15,0.96);
+  z-index:300; display:none; align-items:flex-end; justify-content:center;
+  backdrop-filter:blur(12px);
+}
+.pixmo.open { display:flex; }
+.pixmd {
+  background:var(--sur); border-top:2px solid var(--gold);
+  border-radius:var(--radius) var(--radius) 0 0;
+  width:100%; padding:28px 24px 40px; text-align:center;
+}
+.pixt { font-family:var(--fs); font-size:24px; font-weight:400; color:var(--wh); margin-bottom:2px; }
+.pixs { font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--gr); margin-bottom:20px; }
+.pixv { font-family:var(--fs); font-size:44px; font-weight:600; color:var(--gold2); display:block; margin-bottom:24px; }
+.bnub {
+  display:block; width:100%; padding:15px;
+  background:linear-gradient(135deg, #7209b7, #9c27b0);
+  border:none; color:#fff; font-family:var(--fm);
+  font-size:13px; font-weight:600; cursor:pointer;
+  text-decoration:none; margin-bottom:16px;
+  border-radius:var(--radius2); letter-spacing:0.5px;
+}
+.pixou { display:flex; align-items:center; gap:10px; font-size:10px; color:var(--gr); margin-bottom:14px; }
+.pixou::before,.pixou::after { content:''; flex:1; height:1px; background:var(--brd); }
+.pixkey {
+  background:var(--sur2); border:1px solid var(--brd);
+  border-radius:var(--radius2); padding:14px;
+  display:flex; align-items:center; justify-content:space-between;
+  gap:10px; margin-bottom:16px;
+}
+.pixkt { font-size:14px; color:var(--off); font-weight:500; }
+.bcopy {
+  background:var(--gdim); border:1px solid var(--gline);
+  color:var(--gold2); font-family:var(--fm); font-size:11px;
+  font-weight:500; padding:8px 14px; cursor:pointer;
+  border-radius:var(--radius2);
+}
+.pixav { font-size:11px; color:var(--gr); margin-bottom:20px; line-height:1.6; }
+.bfpix {
+  width:100%; background:var(--sur2); border:1px solid var(--brd);
+  color:var(--gr); font-family:var(--fm); font-size:12px;
+  font-weight:500; padding:12px; cursor:pointer;
+  border-radius:var(--radius2);
+}
+
+/* INFO BOX */
+.info-box {
+  background:var(--sur2); border:1px solid var(--brd);
+  border-radius:var(--radius2); padding:12px 14px;
+  font-size:11px; color:var(--gr); margin-top:8px;
+}
+.info-box strong { color:var(--gold2); }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="s-login" class="screen active">
+  <div class="lbox">
+    <div class="llogo">
+      <span class="lbrand"><em>Ane</em> Joias</span>
+      <span class="lsub">Portal Exclusivo</span>
+    </div>
+    <div class="ldiv"><span>✦</span></div>
+    <div id="f-cliente">
+      <div class="fg"><label>E-MAIL</label><input type="email" id="l-email" placeholder="seu@email.com" autocomplete="email"></div>
+      <div class="fg"><label>SENHA</label><input type="password" id="l-senha" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="bgold" onclick="entrar()">Entrar</button>
+      <div class="lswitch"><a onclick="toggleForms()">Acesso administrativo →</a></div>
+    </div>
+    <div id="f-admin" style="display:none">
+      <div class="fg"><label>E-MAIL ADMIN</label><input type="email" id="a-email" placeholder="admin@anejoias.com.br"></div>
+      <div class="fg"><label>SENHA</label><input type="password" id="a-senha" placeholder="••••••••"></div>
+      <button class="bgold" onclick="entrarAdm()">Entrar como Admin</button>
+      <div class="lswitch"><a onclick="toggleForms()">← Portal de clientes</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="s-admin" class="screen">
+  <div class="topbar">
+    <div class="topbar-brand"><em>Ane</em> Joias</div>
+    <div class="topbar-right">
+      <span class="topbar-email" id="adm-lbl"></span>
+      <button class="bsair" onclick="sair()">Sair</button>
+    </div>
+  </div>
+  <div class="amain">
+
+    <!-- DASHBOARD -->
+    <div id="sec-dash" class="asec active">
+      <div class="mes-selector">
+        <label>Período:</label>
+        <select id="mes-sel" onchange="filtrarMes()">
+          <option value="">Todos os meses</option>
+        </select>
+      </div>
+      <div class="sg">
+        <div class="sc"><div class="sc-accent gold"></div><div class="sl">Clientes Ativas</div><div class="sv" id="st-cl">—</div></div>
+        <div class="sc"><div class="sc-accent green"></div><div class="sl">Recebido</div><div class="sv green" id="st-rc">—</div></div>
+        <div class="sc"><div class="sc-accent blue"></div><div class="sl">A Receber</div><div class="sv blue" id="st-pe">—</div></div>
+        <div class="sc"><div class="sc-accent red"></div><div class="sl">Em Atraso</div><div class="sv red" id="st-at">—</div></div>
+      </div>
+      <div class="dash-section-title">Vencendo em 7 dias</div>
+      <div id="tb-prox"><div class="empty"><div class="spin"></div></div></div>
+    </div>
+
+    <!-- CLIENTES -->
+    <div id="sec-cli" class="asec">
+      <div class="sec-header"><div class="sec-title">Clientes</div></div>
+      <div class="sbar">
+        <span class="sbar-icon">🔍</span>
+        <input type="text" id="busca-cli" placeholder="Buscar cliente..." oninput="filtrarCli()">
+      </div>
+      <div class="card-list" id="tb-cli"><div class="empty"><div class="spin"></div></div></div>
+    </div>
+
+    <!-- COBRANÇAS -->
+    <div id="sec-cob" class="asec">
+      <div class="sec-header"><div class="sec-title">Cobranças</div></div>
+      <div class="sbar">
+        <span class="sbar-icon">🔍</span>
+        <input type="text" id="busca-cob" placeholder="Buscar cobrança ou cliente..." oninput="filtrarCob()">
+      </div>
+      <div class="tabs">
+        <div class="tab active" onclick="filtTab('todas',this)">Todas</div>
+        <div class="tab" onclick="filtTab('pendente',this)">Pendentes</div>
+        <div class="tab" onclick="filtTab('atrasado',this)">Em Atraso</div>
+        <div class="tab" onclick="filtTab('pago',this)">Pagas</div>
+      </div>
+      <div class="card-list" id="tb-cob"><div class="empty"><div class="spin"></div></div></div>
+    </div>
+
+  </div>
+  <button class="fab" id="fab-btn" onclick="fabAcao()" style="display:none">+</button>
+  <nav class="botnav">
+    <div class="bni active" id="bni-dash" onclick="navTo(this,'dash')">
+      <div class="bni-icon">◈</div><div class="bni-lbl">Início</div><div class="bni-pip"></div>
+    </div>
+    <div class="bni" id="bni-cli" onclick="navTo(this,'cli')">
+      <div class="bni-icon">◉</div><div class="bni-lbl">Clientes</div><div class="bni-pip"></div>
+    </div>
+    <div class="bni" id="bni-cob" onclick="navTo(this,'cob')">
+      <div class="bni-icon">◎</div><div class="bni-lbl">Cobranças</div><div class="bni-pip"></div>
+    </div>
+  </nav>
+</div>
+
+<!-- PORTAL CLIENTE -->
+<div id="s-portal" class="screen">
+  <div class="ptop">
+    <div class="pbrand"><em>Ane</em> Joias</div>
+    <div class="puser"><strong id="p-nome">—</strong><button class="bsair" onclick="sair()">Sair</button></div>
+  </div>
+  <div class="pbody">
+    <div class="phi"><h1 id="p-titulo">Suas Faturas</h1><p>Acompanhe seus pedidos com exclusividade.</p></div>
+    <div id="p-alertas"></div>
+    <div id="p-faturas"></div>
+  </div>
+</div>
+
+<!-- MODAL CLIENTE -->
+<div class="mo" id="mo-cli">
+  <div class="md">
+    <div class="md-handle"></div>
+    <div class="mh"><div class="mt" id="mc-t">Nova Cliente</div><button class="mx" onclick="fechar('mo-cli')">×</button></div>
+    <div class="mb">
+      <input type="hidden" id="c-id">
+      <div class="fg"><label>NOME COMPLETO *</label><input type="text" id="c-nome" placeholder="Nome da cliente"></div>
+      <div class="fg"><label>WHATSAPP (com DDI 55)</label><input type="tel" id="c-wpp" placeholder="5553999999999"></div>
+      <div class="fg"><label>E-MAIL (para login)</label><input type="email" id="c-email" placeholder="email@exemplo.com"></div>
+      <div class="fr">
+        <div class="fg"><label>CPF / CNPJ</label><input type="text" id="c-cpf" placeholder="000.000.000-00"></div>
+        <div class="fg"><label>STATUS</label><select id="c-status"><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select></div>
+      </div>
+      <div class="fg"><label>ENDEREÇO</label><input type="text" id="c-end" placeholder="Rua, número, cidade"></div>
+      <div class="info-box">🔑 Senha padrão do portal: <strong>anejoias</strong></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-gold btn-full" onclick="salvarCli()">Salvar Cliente</button>
+      <button class="btn btn-ghost btn-full" onclick="fechar('mo-cli')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL COBRANÇA -->
+<div class="mo" id="mo-cob">
+  <div class="md">
+    <div class="md-handle"></div>
+    <div class="mh"><div class="mt" id="mcob-t">Nova Cobrança</div><button class="mx" onclick="fechar('mo-cob')">×</button></div>
+    <div class="mb">
+      <input type="hidden" id="cob-id">
+      <div class="fg"><label>CLIENTE *</label><select id="cob-cli"><option value="">Selecione...</option></select></div>
+      <div class="fg"><label>DESCRIÇÃO *</label><input type="text" id="cob-desc" placeholder="Ex: Anel Solitário Ouro 18k"></div>
+      <div class="fr">
+        <div class="fg"><label>VALOR TOTAL (R$) *</label><input type="number" id="cob-vt" placeholder="0,00" step="0.01" min="0" inputmode="decimal" oninput="calcParc()"></div>
+        <div class="fg"><label>PARCELAS</label>
+          <select id="cob-parc" onchange="calcParc()">
+            <option value="1">À vista</option>
+            <option value="2">2x</option>
+            <option value="3">3x</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg"><label>VALOR POR PARCELA</label><input type="text" id="cob-vp" readonly style="opacity:0.5" placeholder="—"></div>
+      <div class="fg"><label>VENCIMENTO 1ª *</label><input type="date" id="cob-v1" oninput="calcParc()"></div>
+      <div id="v2-wrap" style="display:none" class="fg"><label>VENCIMENTO 2ª PARCELA</label><input type="date" id="cob-v2"></div>
+      <div id="v3-wrap" style="display:none" class="fg"><label>VENCIMENTO 3ª PARCELA</label><input type="date" id="cob-v3"></div>
+      <div class="fr">
+        <div class="fg"><label>FORMA DE PAGAMENTO</label>
+          <select id="cob-forma">
+            <option value="">Não definido</option><option value="pix">PIX</option>
+            <option value="boleto">Boleto</option><option value="cartao">Cartão</option>
+            <option value="dinheiro">Dinheiro</option><option value="crediario">Crediário</option>
+          </select>
+        </div>
+        <div class="fg"><label>STATUS</label>
+          <select id="cob-status">
+            <option value="pendente">Pendente</option><option value="pago">Pago</option>
+            <option value="atrasado">Atrasado</option><option value="cancelado">Cancelado</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg"><label>OBSERVAÇÕES</label><textarea id="cob-obs" rows="2" placeholder="Informações adicionais..."></textarea></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-gold btn-full" onclick="salvarCob()">Salvar Cobrança</button>
+      <button class="btn btn-ghost btn-full" onclick="fechar('mo-cob')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL LIQUIDAR -->
+<div class="mo" id="mo-liq">
+  <div class="md liq-modal">
+    <div class="md-handle"></div>
+    <div class="mh"><div class="mt">Registrar Pagamento</div><button class="mx" onclick="fechar('mo-liq')">×</button></div>
+    <div class="mb">
+      <div class="liq-info">
+        <span class="liq-parcela" id="liq-val-esp">R$ —</span>
+        <div class="liq-desc" id="liq-desc-txt">Parcela esperada</div>
+      </div>
+      <div style="font-size:11px;font-weight:600;letter-spacing:0.5px;color:var(--gr);margin-bottom:10px">QUANTO FOI PAGO?</div>
+      <div class="liq-opcoes">
+        <div class="liq-opt selected" id="opt-exato" onclick="selecionarOpt('exato')">
+          <div class="liq-opt-icon">✅</div>
+          <div class="liq-opt-txt">
+            <div class="liq-opt-label">Valor exato</div>
+            <div class="liq-opt-sub">Pagou o valor cheio da parcela</div>
+          </div>
+        </div>
+        <div class="liq-opt" id="opt-outro" onclick="selecionarOpt('outro')">
+          <div class="liq-opt-icon">✏️</div>
+          <div class="liq-opt-txt">
+            <div class="liq-opt-label">Outro valor</div>
+            <div class="liq-opt-sub">Pagou mais ou menos — ajusta próximas</div>
+          </div>
+        </div>
+      </div>
+      <div class="liq-valor-wrap" id="liq-valor-wrap">
+        <div class="fg"><label>VALOR PAGO (R$)</label><input type="number" id="liq-valor-input" placeholder="0,00" step="0.01" min="0" inputmode="decimal"></div>
+        <div class="info-box" id="liq-preview">Digite o valor para ver o ajuste nas próximas parcelas.</div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-green btn-full" onclick="confirmarLiquidar()">Confirmar Pagamento</button>
+      <button class="btn btn-ghost btn-full" onclick="fechar('mo-liq')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PIX -->
+<div class="pixmo" id="mo-pix">
+  <div class="pixmd">
+    <div class="pixt">Pagamento PIX</div>
+    <div class="pixs">Ane Joias</div>
+    <span class="pixv" id="pix-val">—</span>
+    <a href="https://nubank.com.br/cobrar/1elhbh/69d8082f-14fc-40ee-b18d-45ed51d313e5" target="_blank" class="bnub">✦ Pagar via Link Nubank</a>
+    <div class="pixou"><span>ou use a chave PIX</span></div>
+    <div class="pixkey">
+      <span class="pixkt">CPF: 041.964.510-12</span>
+      <button class="bcopy" onclick="copiarPix()">Copiar</button>
+    </div>
+    <div class="pixav">Após o pagamento, envie o comprovante para a Ane Joias.</div>
+    <button class="bfpix" onclick="fecharPix()">Fechar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://lzpivblsxnifneqlbagu.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6cGl2YmxzeG5pZm5lcWxiYWd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNTIxMTEsImV4cCI6MjA5MDcyODExMX0.K9XAJJYx22q4b51c2TTeL-Fy9m4ouH3df6Frq5aywCs';
+const ADMIN_EMAIL = 'aneliseoliveiradavila27@gmail.com';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let clientes = [], cobrancas = [], filtroTab = 'todas', secAtual = 'dash';
+let mesFiltro = '';
+let liqAtual = null; // { id, numP, vpEsp, nome, wpp, totalParc, c }
+let liqOpt = 'exato';
+
+// ── INIT ──
+window.onload = async () => {
+  const { data:{ session } } = await sb.auth.getSession();
+  if (session) rotear(session.user);
+  popularMeses();
+};
+
+function rotear(u) { u.email === ADMIN_EMAIL ? carregarAdm(u) : carregarPortal(u); }
+
+function tela(n) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-'+n).classList.add('active');
+}
+
+// ── LOGIN ──
+function toggleForms() {
+  const c = document.getElementById('f-cliente'), a = document.getElementById('f-admin');
+  c.style.display = c.style.display==='none' ? '' : 'none';
+  a.style.display = a.style.display==='none' ? '' : 'none';
+}
+
+async function entrar() {
+  const email = document.getElementById('l-email').value.trim();
+  const senha = document.getElementById('l-senha').value;
+  if (!email||!senha) { toast('Preencha e-mail e senha','err'); return; }
+  const { data, error } = await sb.auth.signInWithPassword({ email, password:senha });
+  if (error) { toast('E-mail ou senha incorretos','err'); return; }
+  rotear(data.user);
+}
+
+async function entrarAdm() {
+  const email = document.getElementById('a-email').value.trim();
+  const senha = document.getElementById('a-senha').value;
+  if (!email||!senha) { toast('Preencha os campos','err'); return; }
+  const { data, error } = await sb.auth.signInWithPassword({ email, password:senha });
+  if (error) { toast('Credenciais inválidas','err'); return; }
+  rotear(data.user);
+}
+
+async function sair() { await sb.auth.signOut(); tela('login'); }
+
+// ── ADMIN ──
+async function carregarAdm(u) {
+  tela('admin');
+  document.getElementById('adm-lbl').textContent = u.email;
+  await Promise.all([loadCli(), loadCob()]);
+}
+
+function navTo(el, sec) {
+  secAtual = sec;
+  document.querySelectorAll('.bni').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.asec').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('sec-'+sec).classList.add('active');
+  document.getElementById('fab-btn').style.display = sec==='dash' ? 'none' : 'flex';
+}
+
+function fabAcao() {
+  if (secAtual==='cli') abrirCli();
+  else if (secAtual==='cob') abrirCob();
+}
+
+// ── MÊS ──
+function popularMeses() {
+  const sel = document.getElementById('mes-sel');
+  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const ano = new Date().getFullYear();
+  for (let m=0; m<12; m++) {
+    const opt = document.createElement('option');
+    const val = ano+'-'+(m+1).toString().padStart(2,'0');
+    opt.value = val;
+    opt.textContent = meses[m]+' '+ano;
+    if (m === new Date().getMonth()) opt.selected = true;
+    sel.appendChild(opt);
+  }
+  mesFiltro = sel.value;
+  filtrarMes();
+}
+
+function filtrarMes() {
+  mesFiltro = document.getElementById('mes-sel').value;
+  stats();
+  renderProx();
+}
+
+// ── LOAD ──
+async function loadCli() {
+  const { data } = await sb.from('clientes').select('*').order('criado_em',{ascending:false});
+  clientes = data||[];
+  renderCli();
+  populaSel();
+  stats();
+}
+
+async function loadCob() {
+  const { data } = await sb.from('cobrancas').select('*, clientes(nome,whatsapp)').order('vencimento',{ascending:true});
+  cobrancas = data||[];
+  renderCob();
+  renderProx();
+  stats();
+}
+
+// ── STATS ──
+function stats() {
+  document.getElementById('st-cl').textContent = clientes.filter(c=>c.status==='ativo').length;
+
+  let cobFiltradas = cobrancas;
+  if (mesFiltro) {
+    cobFiltradas = cobrancas.filter(c => {
+      if (!c.vencimento) return false;
+      return c.vencimento.startsWith(mesFiltro);
+    });
+  }
+
+  const rc = cobFiltradas.filter(c=>c.status==='pago').reduce((s,c)=>s+ +c.valor,0);
+  const pe = cobFiltradas.filter(c=>c.status==='pendente').reduce((s,c)=>s+ +c.valor,0);
+  const at = cobFiltradas.filter(c=>c.status==='atrasado').reduce((s,c)=>s+ +c.valor,0);
+
+  document.getElementById('st-rc').textContent = brl(rc);
+  document.getElementById('st-pe').textContent = brl(pe);
+  document.getElementById('st-at').textContent = brl(at);
+}
+
+// ── PROXIMOS ──
+function renderProx() {
+  const div = document.getElementById('tb-prox');
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const lista = cobrancas.filter(c => {
+    if (['pago','cancelado'].includes(c.status)) return false;
+    const diff = (new Date(c.vencimento+'T00:00:00')-hoje)/86400000;
+    return diff<=7;
+  }).slice(0,8);
+  if (!lista.length) { div.innerHTML='<div class="empty"><div class="empi">✦</div><div class="empt">Nenhum vencimento próximo</div></div>'; return; }
+  div.innerHTML = lista.map(c=>{
+    const wpp = c.clientes?.whatsapp||'';
+    const nome = c.clientes?.nome||'—';
+    const vp = Number(c.valor_p1)||Number(c.valor_parcela)||Number(c.valor);
+    return '<div class="prox-card">'+
+      '<div class="prox-info"><div class="prox-nome">'+nome+'</div><div class="prox-desc">'+c.descricao+'</div>'+
+      (wpp?'<div style="margin-top:8px"><button class="btn btn-wpp" style="font-size:10px;padding:6px 12px" onclick="wppMsg(\''+wpp+'\',\''+esc(nome)+'\',\''+esc(c.descricao)+'\','+vp+',\''+c.vencimento+'\',\''+c.status+'\')">💬 WhatsApp</button></div>':'')+
+      '</div>'+
+      '<div class="prox-right"><span class="prox-val">'+brl(c.valor)+'</span><div class="prox-data">'+fmtD(c.vencimento)+'</div><div style="margin-top:4px"><span class="badge badge-'+c.status+'">'+c.status+'</span></div></div>'+
+    '</div>';
+  }).join('');
+}
+
+// ── RENDER CLIENTES ──
+function renderCli(q='') {
+  const div = document.getElementById('tb-cli');
+  let lista = clientes;
+  if (q) lista = lista.filter(c=>c.nome.toLowerCase().includes(q)||(c.email||'').toLowerCase().includes(q));
+  if (!lista.length) { div.innerHTML='<div class="empty"><div class="empi">◉</div><div class="empt">Nenhuma cliente</div></div>'; return; }
+  div.innerHTML = lista.map(c=>{
+    const cor = c.status==='ativo'?'gold':'gray';
+    return '<div class="card">'+
+      '<div class="card-stripe '+cor+'"></div>'+
+      '<div class="card-top"><div><div class="card-nome">'+c.nome+'</div><div style="margin-top:6px"><span class="badge badge-'+c.status+'">'+c.status+'</span></div></div></div>'+
+      '<div class="card-info">'+
+        (c.whatsapp?'<div class="chip">📱 '+c.whatsapp+'</div>':'')+
+        (c.email?'<div class="chip">✉ '+c.email+'</div>':'')+
+        (c.cpf_cnpj?'<div class="chip">📄 '+c.cpf_cnpj+'</div>':'')+
+      '</div>'+
+      '<div class="card-acts">'+
+        '<button class="btn btn-gold" onclick="editarCli(\''+c.id+'\')">Editar</button>'+
+        '<button class="btn btn-red" onclick="excluirCli(\''+c.id+'\')">Excluir</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function filtrarCli() { renderCli(document.getElementById('busca-cli').value.toLowerCase()); }
+
+// ── RENDER COBRANÇAS ──
+let buscaCob = '';
+function filtrarCob() { buscaCob=document.getElementById('busca-cob').value.toLowerCase(); renderCob(); }
+
+function renderCob() {
+  const div = document.getElementById('tb-cob');
+  let lista = filtroTab==='todas' ? cobrancas : cobrancas.filter(c=>c.status===filtroTab);
+  if (buscaCob) lista = lista.filter(c=>c.descricao.toLowerCase().includes(buscaCob)||(c.clientes?.nome||'').toLowerCase().includes(buscaCob));
+  if (!lista.length) { div.innerHTML='<div class="empty"><div class="empi">◎</div><div class="empt">Nenhuma cobrança</div></div>'; return; }
+
+  div.innerHTML = lista.map(c=>{
+    const parc = Number(c.parcelas)||1;
+    const pagas = c.parcelas_pagas||[];
+    const wpp = c.clientes?.whatsapp||'';
+    const nome = c.clientes?.nome||'—';
+    const isPend = !['pago','cancelado'].includes(c.status);
+
+    // Valores por parcela (atualizados)
+    const vp1 = Number(c.valor_p1)||Number(c.valor_parcela)||Number(c.valor);
+    const vp2 = Number(c.valor_p2)||vp1;
+    const vp3 = Number(c.valor_p3)||vp1;
+
+    const cor = c.status==='pago'?'green':c.status==='atrasado'?'red':c.status==='cancelado'?'gray':'gold';
+
+    // Botões liquidar
+    let bLiq='';
+    if (isPend) {
+      if (parc===1) {
+        bLiq='<button class="btn btn-green" onclick="abrirLiq(\''+c.id+'\',1,'+vp1+',\''+esc(nome)+'\',\''+wpp+'\','+parc+')">✓ Liquidar</button>';
+      } else {
+        if (!pagas.includes(1)) bLiq+='<button class="btn btn-green" onclick="abrirLiq(\''+c.id+'\',1,'+vp1+',\''+esc(nome)+'\',\''+wpp+'\','+parc+')">✓ P1</button> ';
+        if (c.vencimento_2&&!pagas.includes(2)) bLiq+='<button class="btn btn-green" onclick="abrirLiq(\''+c.id+'\',2,'+vp2+',\''+esc(nome)+'\',\''+wpp+'\','+parc+')">✓ P2</button> ';
+        if (c.vencimento_3&&!pagas.includes(3)) bLiq+='<button class="btn btn-green" onclick="abrirLiq(\''+c.id+'\',3,'+vp3+',\''+esc(nome)+'\',\''+wpp+'\','+parc+')">✓ P3</button>';
+      }
+    }
+
+    // WPP cobrança
+    const bWpp = (c.status==='atrasado'&&wpp)
+      ? '<button class="btn btn-wpp" onclick="wppMsg(\''+wpp+'\',\''+esc(nome)+'\',\''+esc(c.descricao)+'\','+vp1+',\''+c.vencimento+'\',\'atrasado\')">💬 Cobrar</button>'
+      : '';
+
+    // Info parcelas pagas
+    const pgInfo = pagas.length>0&&parc>1 ? '<span class="chip green">'+pagas.length+'/'+parc+' pagas</span>' : '';
+
+    // Vencimentos com valores atuais
+    let vencs='';
+    if (parc===1) {
+      vencs='<div class="chip">📅 '+fmtD(c.vencimento)+(pagas.includes(1)?' ✓':'')+'</div>';
+    } else {
+      if (!pagas.includes(1)) vencs+='<div class="chip">P1: '+fmtD(c.vencimento)+' — '+brl(vp1)+'</div>';
+      if (c.vencimento_2&&!pagas.includes(2)) vencs+='<div class="chip">P2: '+fmtD(c.vencimento_2)+' — '+brl(vp2)+'</div>';
+      if (c.vencimento_3&&!pagas.includes(3)) vencs+='<div class="chip">P3: '+fmtD(c.vencimento_3)+' — '+brl(vp3)+'</div>';
+    }
+
+    return '<div class="card">'+
+      '<div class="card-stripe '+cor+'"></div>'+
+      '<div class="card-top">'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font-size:15px;font-weight:500;color:var(--wh);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+c.descricao+'</div>'+
+          '<div style="font-size:11px;color:var(--gr)">'+nome+(parc>1?' · '+parc+'x':'')+'</div>'+
+        '</div>'+
+        '<div class="card-valor-wrap">'+
+          '<span class="card-valor">'+brl(c.valor)+'</span>'+
+          (parc>1?'<div class="card-subval">'+brl(vp1)+'/parc.</div>':'')+
+        '</div>'+
+      '</div>'+
+      '<div class="card-info">'+
+        '<span class="badge badge-'+c.status+'">'+c.status+'</span>'+
+        pgInfo+
+        (c.forma_pagamento?'<div class="chip">'+c.forma_pagamento+'</div>':'')+
+      '</div>'+
+      '<div class="card-info">'+vencs+'</div>'+
+      '<div class="card-acts">'+
+        bLiq+
+        '<button class="btn btn-gold" onclick="editarCob(\''+c.id+'\')">Editar</button>'+
+        '<button class="btn btn-red" onclick="excluirCob(\''+c.id+'\')">Excluir</button>'+
+        bWpp+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function filtTab(s,el) {
+  filtroTab=s;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderCob();
+}
+
+// ── SELECT ──
+function populaSel() {
+  const sel=document.getElementById('cob-cli');
+  const val=sel.value;
+  sel.innerHTML='<option value="">Selecione...</option>';
+  clientes.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.nome;sel.appendChild(o);});
+  if(val) sel.value=val;
+}
+
+// ── MODAIS CLIENTE ──
+function abrirCli() { limCli(); document.getElementById('mc-t').textContent='Nova Cliente'; document.getElementById('mo-cli').classList.add('open'); }
+
+function editarCli(id) {
+  const c=clientes.find(x=>x.id===id); if(!c) return;
+  document.getElementById('c-id').value=c.id;
+  document.getElementById('c-nome').value=c.nome||'';
+  document.getElementById('c-wpp').value=c.whatsapp||'';
+  document.getElementById('c-email').value=c.email||'';
+  document.getElementById('c-cpf').value=c.cpf_cnpj||'';
+  document.getElementById('c-end').value=c.endereco||'';
+  document.getElementById('c-status').value=c.status||'ativo';
+  document.getElementById('mc-t').textContent='Editar Cliente';
+  document.getElementById('mo-cli').classList.add('open');
+}
+
+function limCli() {
+  ['c-id','c-nome','c-wpp','c-email','c-cpf','c-end'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('c-status').value='ativo';
+}
+
+// ── MODAIS COBRANÇA ──
+function abrirCob() { limCob(); document.getElementById('mcob-t').textContent='Nova Cobrança'; document.getElementById('mo-cob').classList.add('open'); }
+
+function editarCob(id) {
+  const c=cobrancas.find(x=>x.id===id); if(!c) return;
+  document.getElementById('cob-id').value=c.id;
+  document.getElementById('cob-cli').value=c.cliente_id||'';
+  document.getElementById('cob-desc').value=c.descricao||'';
+  document.getElementById('cob-vt').value=c.valor||'';
+  document.getElementById('cob-parc').value=c.parcelas||1;
+  document.getElementById('cob-vp').value=c.valor_parcela?brl(c.valor_parcela):'';
+  document.getElementById('cob-v1').value=c.vencimento||'';
+  const p=Number(c.parcelas)||1;
+  document.getElementById('v2-wrap').style.display=p>=2?'':'none';
+  document.getElementById('v3-wrap').style.display=p>=3?'':'none';
+  if(p>=2) document.getElementById('cob-v2').value=c.vencimento_2||'';
+  if(p>=3) document.getElementById('cob-v3').value=c.vencimento_3||'';
+  document.getElementById('cob-forma').value=c.forma_pagamento||'';
+  document.getElementById('cob-status').value=c.status||'pendente';
+  document.getElementById('cob-obs').value=c.observacoes||'';
+  document.getElementById('mcob-t').textContent='Editar Cobrança';
+  document.getElementById('mo-cob').classList.add('open');
+}
+
+function limCob() {
+  ['cob-id','cob-desc','cob-vt','cob-vp','cob-v1','cob-v2','cob-v3','cob-obs'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+  document.getElementById('cob-cli').value='';
+  document.getElementById('cob-parc').value='1';
+  document.getElementById('cob-forma').value='';
+  document.getElementById('cob-status').value='pendente';
+  document.getElementById('v2-wrap').style.display='none';
+  document.getElementById('v3-wrap').style.display='none';
+}
+
+function fechar(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── PARCELAS ──
+function calcParc() {
+  const total=parseFloat(document.getElementById('cob-vt').value)||0;
+  const p=parseInt(document.getElementById('cob-parc').value)||1;
+  document.getElementById('cob-vp').value=total>0?brl(total/p):'';
+  document.getElementById('v2-wrap').style.display=p>=2?'':'none';
+  document.getElementById('v3-wrap').style.display=p>=3?'':'none';
+  const v1=document.getElementById('cob-v1').value;
+  if(v1&&p>=2){const d=new Date(v1+'T00:00:00');d.setMonth(d.getMonth()+1);document.getElementById('cob-v2').value=d.toISOString().split('T')[0];}
+  if(v1&&p>=3){const d=new Date(v1+'T00:00:00');d.setMonth(d.getMonth()+2);document.getElementById('cob-v3').value=d.toISOString().split('T')[0];}
+}
+
+// ── SALVAR CLIENTE ──
+async function salvarCli() {
+  const id=document.getElementById('c-id').value;
+  const nome=document.getElementById('c-nome').value.trim();
+  const email=document.getElementById('c-email').value.trim();
+  if(!nome){toast('Nome é obrigatório','err');return;}
+  const payload={nome,whatsapp:document.getElementById('c-wpp').value.trim()||null,email:email||null,cpf_cnpj:document.getElementById('c-cpf').value.trim()||null,endereco:document.getElementById('c-end').value.trim()||null,status:document.getElementById('c-status').value,senha_acesso:'anejoias'};
+  if(!id&&email){try{const{data:ad}=await sb.auth.signUp({email,password:'anejoias'});if(ad?.user)payload.user_id=ad.user.id;}catch(e){}}
+  const{error}=id?await sb.from('clientes').update(payload).eq('id',id):await sb.from('clientes').insert(payload);
+  if(error){toast('Erro: '+error.message,'err');return;}
+  toast(id?'Cliente atualizada!':'Cliente cadastrada! ✦','ok');
+  fechar('mo-cli'); await loadCli();
+}
+
+// ── SALVAR COBRANÇA ──
+async function salvarCob() {
+  const id=document.getElementById('cob-id').value;
+  const cli=document.getElementById('cob-cli').value;
+  const desc=document.getElementById('cob-desc').value.trim();
+  const vt=parseFloat(document.getElementById('cob-vt').value);
+  const p=parseInt(document.getElementById('cob-parc').value)||1;
+  const v1=document.getElementById('cob-v1').value;
+  if(!cli||!desc||!vt||!v1){toast('Preencha os campos obrigatórios','err');return;}
+  const vp=vt/p;
+  const payload={
+    cliente_id:cli, descricao:p>1?desc+' ('+p+'x de '+brl(vp)+')':desc,
+    valor:vt, valor_parcela:vp, parcelas:p, vencimento:v1,
+    valor_p1:vp, valor_p2:p>=2?vp:null, valor_p3:p>=3?vp:null,
+    vencimento_2:p>=2?(document.getElementById('cob-v2').value||null):null,
+    vencimento_3:p>=3?(document.getElementById('cob-v3').value||null):null,
+    forma_pagamento:document.getElementById('cob-forma').value||null,
+    status:document.getElementById('cob-status').value,
+    observacoes:document.getElementById('cob-obs').value.trim()||null,
+  };
+  const{error}=id?await sb.from('cobrancas').update(payload).eq('id',id):await sb.from('cobrancas').insert(payload);
+  if(error){toast('Erro: '+error.message,'err');return;}
+  toast(id?'Cobrança atualizada!':'Cobrança criada! ✦','ok');
+  fechar('mo-cob'); await loadCob();
+}
+
+// ── MODAL LIQUIDAR ──
+function abrirLiq(id, numP, vpEsp, nome, wpp, totalParc) {
+  const c = cobrancas.find(x=>x.id===id); if(!c) return;
+  liqAtual = {id, numP, vpEsp, nome, wpp, totalParc, c};
+  liqOpt = 'exato';
+  document.getElementById('liq-val-esp').textContent = brl(vpEsp);
+  document.getElementById('liq-desc-txt').textContent = 'Parcela '+numP+(totalParc>1?'/'+totalParc:'')+' — '+c.descricao;
+  document.getElementById('liq-valor-input').value = '';
+  document.getElementById('liq-preview').textContent = 'Digite o valor para ver o ajuste nas próximas parcelas.';
+  selecionarOpt('exato');
+  document.getElementById('mo-liq').classList.add('open');
+}
+
+function selecionarOpt(opt) {
+  liqOpt = opt;
+  document.getElementById('opt-exato').classList.toggle('selected', opt==='exato');
+  document.getElementById('opt-outro').classList.toggle('selected', opt==='outro');
+  document.getElementById('liq-valor-wrap').classList.toggle('show', opt==='outro');
+  if (opt==='outro') {
+    document.getElementById('liq-valor-input').addEventListener('input', previewAjuste);
+  }
+}
+
+function previewAjuste() {
+  if (!liqAtual) return;
+  const { vpEsp, numP, totalParc, c } = liqAtual;
+  const pago = parseFloat(document.getElementById('liq-valor-input').value)||0;
+  if (!pago) { document.getElementById('liq-preview').textContent='Digite o valor para ver o ajuste.'; return; }
+
+  const diff = pago - vpEsp; // positivo=pagou mais, negativo=pagou menos
+  const pagas = c.parcelas_pagas||[];
+  const restantes = [];
+  for(let i=1;i<=totalParc;i++) { if(i!==numP && !pagas.includes(i)) restantes.push(i); }
+
+  if (restantes.length===0) {
+    document.getElementById('liq-preview').innerHTML = 'Última parcela. Diferença de <strong>'+brl(Math.abs(diff))+'</strong>'+(diff>=0?' a mais':' a menos')+'.';
+    return;
+  }
+
+  const ajuste = diff/restantes.length;
+  const vAtual = numP===1?Number(c.valor_p1||c.valor_parcela):numP===2?Number(c.valor_p2||c.valor_parcela):Number(c.valor_p3||c.valor_parcela);
+
+  let preview='';
+  restantes.forEach(r=>{
+    const vRestAtual = r===1?Number(c.valor_p1||c.valor_parcela):r===2?Number(c.valor_p2||c.valor_parcela):Number(c.valor_p3||c.valor_parcela);
+    const vNovo = vRestAtual - ajuste;
+    preview += 'P'+r+': <strong>'+brl(vRestAtual)+'</strong> → <strong>'+brl(vNovo)+'</strong><br>';
+  });
+
+  document.getElementById('liq-preview').innerHTML = (diff>0?'✅ Pagou R$'+Math.abs(diff).toFixed(2)+' a mais — desconta nas próximas:':'⚠️ Pagou R$'+Math.abs(diff).toFixed(2)+' a menos — distribui nas próximas:')+'<br><br>'+preview;
+}
+
+async function confirmarLiquidar() {
+  if (!liqAtual) return;
+  const { id, numP, vpEsp, nome, wpp, totalParc, c } = liqAtual;
+
+  let valPago = vpEsp;
+  if (liqOpt==='outro') {
+    valPago = parseFloat(document.getElementById('liq-valor-input').value)||0;
+    if (!valPago) { toast('Digite o valor pago','err'); return; }
+  }
+
+  const pagas = Array.isArray(c.parcelas_pagas)?[...c.parcelas_pagas]:[];
+  if (!pagas.includes(numP)) pagas.push(numP);
+  const todas = pagas.length>=totalParc;
+
+  // Calcula ajuste nas próximas parcelas
+  const diff = valPago - vpEsp;
+  const restantes = [];
+  for(let i=1;i<=totalParc;i++) { if(i!==numP && !pagas.includes(i)) restantes.push(i); }
+
+  const update = {
+    parcelas_pagas:pagas,
+    status:todas?'pago':c.status,
+    pago_em:todas?new Date().toISOString():null,
+  };
+
+  // Registra valor pago nesta parcela
+  update['pago_p'+numP] = valPago;
+
+  // Ajusta valores das próximas
+  if (diff!==0 && restantes.length>0) {
+    const ajuste = diff/restantes.length;
+    restantes.forEach(r=>{
+      const vAtual = Number(c['valor_p'+r]||c.valor_parcela||c.valor);
+      update['valor_p'+r] = Math.max(0, vAtual - ajuste);
+    });
+    // Atualiza valor total
+    let novoTotal = valPago;
+    for(let i=1;i<=totalParc;i++) {
+      if(i===numP) continue;
+      if(pagas.includes(i)) novoTotal += Number(c['pago_p'+i]||c.valor_parcela||0);
+      else novoTotal += update['valor_p'+i]||Number(c['valor_p'+i]||c.valor_parcela||0);
+    }
+    update.valor = novoTotal;
+  }
+
+  const { error } = await sb.from('cobrancas').update(update).eq('id',id);
+  if (error) { toast('Erro: '+error.message,'err'); return; }
+
+  toast('Parcela '+numP+' liquidada! ✦','ok');
+  fechar('mo-liq');
+
+  // WPP confirmação
+  if (wpp) {
+    const n = nome.split(' ')[0];
+    const ajusteInfo = diff!==0&&restantes.length>0
+      ? '\n\n📊 Ajuste aplicado: parcelas restantes '+(diff>0?'reduzidas':'aumentadas')+' em '+brl(Math.abs(diff/restantes.length))+' cada.'
+      : '';
+    const msg='Olá, '+n+'! ✨\n\nConfirmamos o recebimento da *parcela '+numP+(totalParc>1?'/'+totalParc:'')+'*:\n\n📦 *'+c.descricao+'*\n💰 Valor recebido: *'+brl(valPago)+'*'+ajusteInfo+'\n\n'+(todas?'✅ Todas as parcelas foram quitadas!\nObrigada pela confiança. 💛':'📋 Parcelas pagas: '+pagas.length+'/'+totalParc)+'\n\n_Ane Joias — com carinho e compromisso_ 💍';
+    window.open('https://wa.me/'+wpp.replace(/\D/g,'')+'?text='+encodeURIComponent(msg),'_blank');
+  }
+
+  await loadCob();
+}
+
+// ── WPP ──
+function wppMsg(wpp, nome, desc, vp, venc, status) {
+  const n=nome.split(' ')[0];
+  const msg=status==='atrasado'
+    ?'Olá, '+n+'! 📢\n\nSua fatura está em *atraso*:\n\n📦 *'+desc+'*\n💰 Valor: *'+brl(vp)+'*\n📅 Vencimento: *'+fmtD(venc)+'*\n⚠️ Multa (10%): *'+brl(vp*0.10)+'*\n💳 Total com multa: *'+brl(vp*1.10)+'*\n\nManter suas parcelas em dia preserva seu *crédito* e mantém suas condições especiais conosco. 💍\n\nRegularize o quanto antes! 💛\n\n_Ane Joias_'
+    :'Olá, '+n+'! 😊\n\nLembrete de vencimento:\n\n📦 *'+desc+'*\n💰 *'+brl(vp)+'*\n📅 Vencimento: *'+fmtD(venc)+'*\n\nQualquer dúvida, estou à disposição! 💛\n\n_Ane Joias_';
+  window.open('https://wa.me/'+wpp.replace(/\D/g,'')+'?text='+encodeURIComponent(msg),'_blank');
+}
+
+// ── EXCLUIR ──
+async function excluirCli(id) {
+  if(!confirm('Excluir esta cliente?')) return;
+  const{error}=await sb.from('clientes').delete().eq('id',id);
+  if(error){toast('Erro ao excluir','err');return;}
+  toast('Cliente removida');
+  await loadCli(); await loadCob();
+}
+
+async function excluirCob(id) {
+  if(!confirm('Excluir esta cobrança?')) return;
+  const{error}=await sb.from('cobrancas').delete().eq('id',id);
+  if(error){toast('Erro ao excluir','err');return;}
+  toast('Cobrança removida');
+  await loadCob();
+}
+
+// ── PORTAL CLIENTE ──
+async function carregarPortal(u) {
+  tela('portal');
+  let cli=null;
+  const{data:r1}=await sb.from('clientes').select('*').eq('email',u.email);
+  if(r1&&r1.length) cli=r1[0];
+  if(!cli){const{data:r2}=await sb.from('clientes').select('*').eq('user_id',u.id);if(r2&&r2.length)cli=r2[0];}
+  if(!cli){
+    document.getElementById('p-titulo').textContent='Cadastro não encontrado';
+    document.getElementById('p-faturas').innerHTML='<div class="pvazio"><div class="pvazoi">◈</div><div class="pvazt">Entre em contato com a Ane Joias</div></div>';
+    return;
+  }
+  const n=cli.nome.split(' ')[0];
+  document.getElementById('p-nome').textContent=n;
+  document.getElementById('p-titulo').textContent='Olá, '+n+' ✦';
+  const{data:fats}=await sb.from('cobrancas').select('*').eq('cliente_id',cli.id).order('vencimento',{ascending:true});
+  renderFaturas(fats||[]);
+}
+
+function renderFaturas(fats) {
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  const prox=fats.filter(f=>f.status==='pendente'&&(new Date(f.vencimento+'T00:00:00')-hoje)/86400000<=5&&(new Date(f.vencimento+'T00:00:00')-hoje)/86400000>=0);
+  document.getElementById('p-alertas').innerHTML=prox.map(f=>'<div class="alerta">⟡ Vence em '+fmtD(f.vencimento)+' — <strong>'+brl(f.valor)+'</strong></div>').join('');
+
+  const div=document.getElementById('p-faturas');
+  if(!fats.length){div.innerHTML='<div class="pvazio"><div class="pvazoi">◈</div><div class="pvazt">Nenhuma fatura</div></div>';return;}
+
+  div.innerHTML=fats.map(f=>{
+    const isPend=f.status==='pendente'||f.status==='atrasado';
+    const parc=Number(f.parcelas)||1;
+    const pagas=f.parcelas_pagas||[];
+    const vp1=Number(f.valor_p1)||Number(f.valor_parcela)||Number(f.valor);
+    const vp2=Number(f.valor_p2)||vp1;
+    const vp3=Number(f.valor_p3)||vp1;
+
+    // Multa 48h
+    let valorCobrar=vp1,multaHtml='';
+    if(f.status==='atrasado'){
+      const hrs=(new Date()-new Date(f.vencimento+'T00:00:00'))/3600000;
+      if(hrs>=48){valorCobrar=vp1*1.10;multaHtml='<div class="multa-aviso">⚠️ Multa de 10% aplicada — Total: '+brl(valorCobrar)+'</div>';}
+    }
+
+    // PIX
+    let bpix='';
+    if(isPend){
+      if(parc===1){
+        bpix='<div class="fpix-wrap"><button class="bpix" onclick="abrirPix('+valorCobrar+')">✦ Pagar via PIX</button></div>';
+      } else {
+        bpix='<div class="fpix-wrap">';
+        const vc2=Number(f.valor_p2)||vp1;
+        const vc3=Number(f.valor_p3)||vp1;
+        if(!pagas.includes(1))bpix+='<button class="bpix" onclick="abrirPix('+(f.status==='atrasado'?vp1*1.10:vp1)+')">✦ 1ª parcela</button>';
+        if(f.vencimento_2&&!pagas.includes(2))bpix+='<button class="bpix" onclick="abrirPix('+(f.status==='atrasado'?vc2*1.10:vc2)+')">✦ 2ª parcela</button>';
+        if(f.vencimento_3&&!pagas.includes(3))bpix+='<button class="bpix" onclick="abrirPix('+(f.status==='atrasado'?vc3*1.10:vc3)+')">✦ 3ª parcela</button>';
+        bpix+='</div>';
+      }
+    }
+
+    const cor=f.status==='pago'?'green':f.status==='atrasado'?'red':f.status==='cancelado'?'gray':'gold';
+    const vencs=parc>1?'1ª: '+fmtD(f.vencimento)+(f.vencimento_2?' · 2ª: '+fmtD(f.vencimento_2):'')+(f.vencimento_3?' · 3ª: '+fmtD(f.vencimento_3):''):'Vence: '+fmtD(f.vencimento);
+
+    return '<div class="fcard"><div class="fcard-stripe '+cor+'"></div><div class="fin">'+
+      '<span class="fval">'+brl(f.valor)+'</span>'+
+      '<div class="fst"><span class="badge badge-'+f.status+'">'+f.status+'</span>'+(pagas.length>0&&parc>1?' <span style="color:var(--green);font-size:10px">'+pagas.length+'/'+parc+' pagas</span>':'')+' </div>'+
+      '<div class="fdesc">'+f.descricao+'</div>'+
+      '<div class="fmeta"><span class="chip">📅 '+vencs+'</span>'+(f.forma_pagamento?'<span class="chip">'+f.forma_pagamento+'</span>':'')+'</div>'+
+      multaHtml+bpix+
+    '</div></div>';
+  }).join('');
+}
+
+// ── PIX ──
+function abrirPix(v){document.getElementById('pix-val').textContent=brl(v);document.getElementById('mo-pix').classList.add('open');}
+function fecharPix(){document.getElementById('mo-pix').classList.remove('open');}
+function copiarPix(){navigator.clipboard.writeText('041.964.510-12').then(()=>toast('Chave copiada! ✦','ok')).catch(()=>toast('CPF: 041.964.510-12'));}
+
+// ── UTILS ──
+function brl(v){return 'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2});}
+function fmtD(d){if(!d)return '—';const[y,m,day]=d.split('-');return day+'/'+m+'/'+y;}
+function esc(s){return(s||'').replace(/'/g,"\\'");}
+
+function toast(msg,tipo=''){
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.className='toast show'+(tipo==='err'?' err':tipo==='ok'?' ok':'');
+  setTimeout(()=>el.classList.remove('show'),3000);
+}
+</script>
+</body>
+</html>

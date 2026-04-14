@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NUMEN · Briefing</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Inter:wght@300;400;500&display=swap');
+
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:#06040a;color:#e4e0d8;font-family:'Inter',sans-serif;overflow:hidden;}
+
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse at 15% 20%, rgba(90,50,140,0.13) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 75%, rgba(60,30,110,0.09) 0%, transparent 50%);
+}
+
+/* ===== LAYOUT ===== */
+.app{position:relative;z-index:1;height:100vh;display:flex;flex-direction:column;}
+
+/* TOP BAR */
+.topbar{
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1.4rem 3rem;
+  border-bottom:0.5px solid rgba(255,255,255,0.06);
+}
+.tl{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:300;letter-spacing:0.22em;color:rgba(255,255,255,0.6);}
+.tr-info{display:flex;align-items:center;gap:1.5rem;}
+.step-label{font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:rgba(255,255,255,0.2);}
+
+/* PROGRESS LINE */
+.progress-line{flex-shrink:0;height:1px;background:rgba(255,255,255,0.05);}
+.progress-fill{height:1px;background:rgba(255,255,255,0.35);transition:width 0.5s cubic-bezier(.4,0,.2,1);}
+
+/* DOTS NAV */
+.dots-wrap{
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  gap:6px;padding:1rem 0;
+}
+.dot{
+  width:5px;height:5px;border-radius:50%;
+  background:rgba(255,255,255,0.1);
+  transition:all 0.3s;cursor:default;flex-shrink:0;
+}
+.dot.done{background:rgba(255,255,255,0.3);}
+.dot.active{background:#fff;width:18px;border-radius:3px;}
+
+/* MAIN STAGE */
+.stage{
+  flex:1;overflow:hidden;position:relative;
+}
+
+/* SLIDES CONTAINER */
+.slides{
+  display:flex;height:100%;
+  transition:transform 0.45s cubic-bezier(.4,0,.2,1);
+}
+.slide{
+  min-width:100%;height:100%;
+  display:flex;align-items:center;justify-content:center;
+  padding:2rem 3rem;
+  overflow-y:auto;
+}
+.slide-inner{width:100%;max-width:680px;}
+
+/* ===== SLIDE TYPES ===== */
+
+/* COVER */
+.cover-eye{font-size:9px;letter-spacing:0.28em;text-transform:uppercase;color:rgba(255,255,255,0.18);margin-bottom:1.5rem;}
+.cover-logo{font-family:'Cormorant Garamond',serif;font-size:90px;font-weight:300;letter-spacing:0.14em;color:#fff;line-height:1;}
+.cover-tagline{font-size:12px;font-weight:300;letter-spacing:0.1em;color:rgba(255,255,255,0.28);margin-top:1rem;}
+.cover-rule{width:36px;height:0.5px;background:rgba(255,255,255,0.15);margin:2.5rem 0;}
+.cover-desc{
+  font-family:'Cormorant Garamond',serif;font-style:italic;font-size:20px;font-weight:300;
+  color:rgba(255,255,255,0.42);line-height:1.7;margin-bottom:3rem;max-width:520px;
+}
+
+/* SECTION INTRO SLIDE */
+.si-tag{font-size:9px;letter-spacing:0.24em;text-transform:uppercase;color:rgba(255,255,255,0.18);margin-bottom:0.8rem;}
+.si-name{font-family:'Cormorant Garamond',serif;font-size:52px;font-weight:300;color:#fff;line-height:1;margin-bottom:0.6rem;}
+.si-name em{font-style:italic;color:rgba(255,255,255,0.35);}
+.si-spec{font-size:13px;font-weight:300;color:rgba(255,255,255,0.3);margin-bottom:1.5rem;}
+.si-intro{
+  font-family:'Cormorant Garamond',serif;font-style:italic;font-size:19px;font-weight:300;
+  color:rgba(255,255,255,0.4);line-height:1.7;margin-bottom:3rem;max-width:560px;
+}
+
+/* QUESTION SLIDE */
+.q-meta{display:flex;align-items:baseline;gap:0.8rem;margin-bottom:1.8rem;}
+.q-num{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:rgba(255,255,255,0.16);}
+.q-cat{font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:rgba(255,255,255,0.16);}
+.q-text{
+  font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:300;
+  color:#fff;line-height:1.5;margin-bottom:0.9rem;
+}
+.q-hint{font-size:12px;font-weight:300;color:rgba(255,255,255,0.25);font-style:italic;margin-bottom:2rem;line-height:1.6;}
+textarea.qa{
+  width:100%;
+  background:transparent;
+  border:none;border-bottom:0.5px solid rgba(255,255,255,0.15);
+  color:rgba(255,255,255,0.85);
+  font-family:'Inter',sans-serif;font-size:15px;font-weight:300;
+  padding:0.6rem 0;resize:none;height:80px;
+  outline:none;transition:border 0.2s;line-height:1.7;
+  border-radius:0;
+}
+textarea.qa:focus{border-bottom-color:rgba(255,255,255,0.4);}
+textarea.qa::placeholder{color:rgba(255,255,255,0.14);}
+textarea.qa.err{border-bottom-color:rgba(200,80,80,0.5);}
+.req-msg{font-size:11px;color:rgba(200,100,100,0.7);margin-top:0.5rem;display:none;}
+.req-msg.show{display:block;}
+
+/* TRANSITION SLIDE */
+.tr-check{
+  width:50px;height:50px;border:0.5px solid rgba(100,220,130,0.3);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:1.8rem;
+}
+.tr-title{font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:300;color:#fff;margin-bottom:0.5rem;}
+.tr-sub{font-size:12px;font-weight:300;color:rgba(255,255,255,0.28);letter-spacing:0.06em;margin-bottom:2.5rem;}
+.tr-rule{width:36px;height:0.5px;background:rgba(255,255,255,0.1);margin-bottom:2.5rem;}
+.tr-card{border:0.5px solid rgba(255,255,255,0.08);padding:1.8rem 2rem;margin-bottom:3rem;}
+.tc-eye{font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:rgba(255,255,255,0.18);margin-bottom:0.6rem;}
+.tc-title{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:300;color:#fff;margin-bottom:0.8rem;}
+.tc-desc{font-size:13px;font-weight:300;color:rgba(255,255,255,0.35);line-height:1.75;}
+
+/* DONE SLIDE */
+.done-logo{font-family:'Cormorant Garamond',serif;font-size:76px;font-weight:300;letter-spacing:0.14em;color:#fff;margin-bottom:0.5rem;}
+.done-sub{font-size:12px;letter-spacing:0.1em;color:rgba(255,255,255,0.22);margin-bottom:2.5rem;}
+.done-rule{width:36px;height:0.5px;background:rgba(255,255,255,0.1);margin-bottom:2.5rem;}
+.done-msg{
+  font-family:'Cormorant Garamond',serif;font-style:italic;font-size:20px;font-weight:300;
+  color:rgba(255,255,255,0.38);line-height:1.7;margin-bottom:2.5rem;max-width:460px;
+}
+.done-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:2rem;}
+.done-tag{
+  padding:0.45rem 0.9rem;border:0.5px solid rgba(255,255,255,0.1);
+  font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.28);
+}
+.done-sig{font-size:10px;color:rgba(255,255,255,0.12);letter-spacing:0.08em;margin-top:3rem;}
+
+/* ===== BOTTOM NAV ===== */
+.bottom{
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1.2rem 3rem;
+  border-top:0.5px solid rgba(255,255,255,0.05);
+}
+.btn-back{
+  display:inline-flex;align-items:center;gap:0.5rem;
+  padding:0.7rem 1.2rem;
+  border:0.5px solid rgba(255,255,255,0.1);
+  background:transparent;color:rgba(255,255,255,0.35);
+  font-family:'Inter',sans-serif;font-size:9px;font-weight:400;
+  letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;transition:all 0.25s;
+}
+.btn-back:hover{border-color:rgba(255,255,255,0.22);color:rgba(255,255,255,0.6);}
+.btn-next{
+  display:inline-flex;align-items:center;gap:0.6rem;
+  padding:0.8rem 1.8rem;
+  border:0.5px solid rgba(255,255,255,0.28);
+  background:transparent;color:#fff;
+  font-family:'Inter',sans-serif;font-size:9px;font-weight:400;
+  letter-spacing:0.16em;text-transform:uppercase;cursor:pointer;transition:all 0.3s;
+}
+.btn-next:hover{background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.5);}
+.btn-next:active{transform:scale(0.97);}
+.btn-next.loading{opacity:0.4;pointer-events:none;}
+.btn-next.success{border-color:rgba(100,220,130,0.45);color:rgba(130,230,150,0.9);}
+.btn-next:disabled{opacity:0.3;pointer-events:none;}
+
+/* KEYBOARD HINT */
+.kbd-hint{font-size:9px;letter-spacing:0.1em;color:rgba(255,255,255,0.13);}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:5rem;right:2rem;z-index:300;
+  padding:0.85rem 1.3rem;
+  background:rgba(10,6,18,0.97);border:0.5px solid rgba(255,255,255,0.1);
+  font-size:12px;color:rgba(255,255,255,0.65);font-family:'Inter',sans-serif;
+  opacity:0;transition:opacity 0.3s;pointer-events:none;max-width:280px;line-height:1.5;
+}
+.toast.show{opacity:1;}
+.toast.ok{border-color:rgba(100,220,130,0.3);color:rgba(130,230,150,0.8);}
+.toast.err{border-color:rgba(220,100,100,0.3);color:rgba(230,130,130,0.8);}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="tl">NUMEN</div>
+    <div class="tr-info">
+      <div class="step-label" id="step-label">—</div>
+    </div>
+  </div>
+
+  <div class="progress-line">
+    <div class="progress-fill" id="prog-fill" style="width:0%"></div>
+  </div>
+
+  <div class="dots-wrap" id="dots-wrap"></div>
+
+  <div class="stage">
+    <div class="slides" id="slides"></div>
+  </div>
+
+  <div class="bottom">
+    <button class="btn-back" id="btn-back" onclick="prev()">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12,19 5,12 12,5"/></svg>
+      Voltar
+    </button>
+    <div class="kbd-hint" id="kbd-hint">Enter para avançar</div>
+    <button class="btn-next" id="btn-next" onclick="next()">
+      Avançar
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg>
+    </button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== SUPABASE =====
+const SUPABASE_URL = 'https://zebudefzhakitwjswvkl.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InplYnVkZWZ6aGFraXR3anN3dmtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MTE1MDksImV4cCI6MjA5MTQ4NzUwOX0.uKRcENdJFNirbC84qG7uIkkDFbn4McQ4DGxh3CKAyPM';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ===== RESPOSTAS =====
+const R = { g: {}, f: {} };
+
+// ===== SLIDES DATA =====
+const SLIDES = [
+  // 0: COVER
+  { type: 'cover' },
+
+  // 1: INTRO DR GIBRAN
+  { type: 'intro-g' },
+
+  // PERGUNTAS GIBRAN (2–16)
+  { type:'q', who:'g', n:1,  cat:'Identidade',   req:true,  q:'Qual é a sua especialidade principal dentro da cirurgia plástica facial?', hint:'Técnicas ou procedimentos pelos quais você é mais reconhecido. Ex: ritidoplastia estrutural, rinoplastia, lifting facial...' },
+  { type:'q', who:'g', n:2,  cat:'Identidade',   req:false, q:'Como chegou à cirurgia facial como foco? Existe um caso ou momento que marcou essa escolha?', hint:'Queremos capturar a origem — isso vira narrativa de autoridade.' },
+  { type:'q', who:'g', n:3,  cat:'Identidade',   req:true,  q:'Onde se formou e quais foram as principais especializações, fellowships e congressos — especialmente os internacionais?', hint:'' },
+  { type:'q', who:'g', n:4,  cat:'Identidade',   req:false, q:'Você publica artigos, é palestrante ou professor em cursos de cirurgia? Cite os mais relevantes.', hint:'' },
+  { type:'q', who:'g', n:5,  cat:'Paciente ideal', req:true,  q:'Quem é o paciente que mais te realiza como cirurgião?', hint:'Descreva o perfil — idade, objetivo, comportamento, momento de vida.' },
+  { type:'q', who:'g', n:6,  cat:'Paciente ideal', req:false, q:'Qual resultado você entrega que mais transforma a vida do paciente?', hint:'O que eles mais relatam após o procedimento?' },
+  { type:'q', who:'g', n:7,  cat:'Posicionamento', req:true,  q:'Como você se diferencia de outros cirurgiões faciais?', hint:'O que faz de forma distinta — na técnica, no atendimento ou na relação com o paciente?' },
+  { type:'q', who:'g', n:8,  cat:'Posicionamento', req:false, q:'Qual é a sua filosofia de resultado estético? Como descreveria sua "assinatura" como cirurgião?', hint:'Ex: naturalidade, harmonia, transformação discreta...' },
+  { type:'q', who:'g', n:9,  cat:'Digital',       req:false, q:'Você tem presença digital ativa hoje — Instagram, YouTube, site?', hint:'Como avalia o que está publicado atualmente?' },
+  { type:'q', who:'g', n:10, cat:'Digital',       req:false, q:'Você tem conforto em aparecer em vídeo? Qual formato prefere?', hint:'Ex: bastidores, educativo, antes/depois, entrevista...' },
+  { type:'q', who:'g', n:11, cat:'Digital',       req:false, q:'Há algum médico ou referência de comunicação que você admira? O que atrai nesse estilo?', hint:'' },
+  { type:'q', who:'g', n:12, cat:'Comercial',     req:true,  q:'De onde vem a maioria dos seus pacientes hoje?', hint:'Indicação, redes sociais, busca orgânica, convênio...' },
+  { type:'q', who:'g', n:13, cat:'Comercial',     req:false, q:'Qual é o ticket médio dos seus principais procedimentos e o volume mensal aproximado de cirurgias?', hint:'Fica restrito à equipe NUMEN — usado para dimensionar metas e ROI.' },
+  { type:'q', who:'g', n:14, cat:'Comercial',     req:false, q:'Qual é a sua maior dor no processo atual de captação de pacientes?', hint:'' },
+  { type:'q', who:'g', n:15, cat:'Metas',         req:true,  q:'Qual resultado você esperaria ver em 90 dias para considerar o NUMEN um sucesso?', hint:'' },
+
+  // 17: ENVIO GIBRAN + TRANSIÇÃO
+  { type: 'send-g' },
+
+  // 18: INTRO DRA FERNANDA
+  { type: 'intro-f' },
+
+  // PERGUNTAS FERNANDA (19–33)
+  { type:'q', who:'f', n:1,  cat:'Identidade',   req:true,  q:'Como é a sua rotina como anestesiologista? Você atua exclusivamente nas cirurgias do Dr. Gibran?', hint:'' },
+  { type:'q', who:'f', n:2,  cat:'Identidade',   req:false, q:'Qual é a sua formação e especialização? Há cursos ou certificações que você considera diferenciais?', hint:'' },
+  { type:'q', who:'f', n:3,  cat:'Identidade',   req:false, q:'Como você descreveria o seu papel dentro da clínica e no projeto de vida em comum com o Dr. Gibran?', hint:'Parceria médica, pessoal e de negócio.' },
+  { type:'q', who:'f', n:4,  cat:'Comercial',    req:false, q:'Você já teve contato direto com pacientes no processo de consulta ou pós-operatório?', hint:'Como costuma ser esse contato?' },
+  { type:'q', who:'f', n:5,  cat:'Comercial',    req:true,  q:'Você se sente confortável assumindo o papel de facilitadora do fechamento com o paciente?', hint:'Tirar dúvidas, apresentar condições, reforçar segurança da decisão.' },
+  { type:'q', who:'f', n:6,  cat:'Comercial',    req:false, q:'O que você acredita que uma paciente precisa ouvir — ou sentir — para confiar e avançar para a cirurgia?', hint:'' },
+  { type:'q', who:'f', n:7,  cat:'Comercial',    req:true,  q:'Qual é o seu maior talento na comunicação com pessoas?', hint:'O que as pacientes costumam dizer sobre você após o atendimento?' },
+  { type:'q', who:'f', n:8,  cat:'Digital',      req:false, q:'Você tem perfil próprio nas redes? Já publica conteúdo relacionado à medicina ou ao seu estilo de vida?', hint:'' },
+  { type:'q', who:'f', n:9,  cat:'Digital',      req:false, q:'Como você se sente em aparecer em vídeo ou em conteúdos junto ao Dr. Gibran?', hint:'Tem preferências de formato ou resistências?' },
+  { type:'q', who:'f', n:10, cat:'Digital',      req:false, q:'Existe algum tema que você gostaria de comunicar com a sua própria voz?', hint:'Ex: saúde feminina, segurança cirúrgica, bem-estar, rotina médica...' },
+  { type:'q', who:'f', n:11, cat:'Posicionamento', req:true,  q:'Como você imagina sua presença no projeto NUMEN?', hint:'Aparecer junto ao Dr. Gibran, ter espaço próprio, ou os dois?' },
+  { type:'q', who:'f', n:12, cat:'Posicionamento', req:false, q:'Qual é o maior medo ou resistência que você tem em se expor profissionalmente nas redes?', hint:'' },
+  { type:'q', who:'f', n:13, cat:'Posicionamento', req:false, q:'Se você pudesse definir como quer ser reconhecida pelo mercado em 1 ano, o que diria?', hint:'' },
+  { type:'q', who:'f', n:14, cat:'Perfil',       req:false, q:'Como você descreveria a sua personalidade? Palavras que as pessoas mais próximas usariam para te definir.', hint:'' },
+  { type:'q', who:'f', n:15, cat:'Referências',  req:false, q:'Existe alguma médica, empresária ou figura pública que você admira pela forma como se posiciona?', hint:'O que atrai nessa referência?' },
+
+  // DONE
+  { type: 'done' }
+];
+
+// ===== STATE =====
+let cur = 0;
+const TOTAL = SLIDES.length;
+
+// ===== BUILD SLIDES =====
+function buildSlides() {
+  const container = document.getElementById('slides');
+  container.innerHTML = '';
+
+  SLIDES.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'slide';
+    div.id = 'slide-' + i;
+
+    if(s.type === 'cover') {
+      div.innerHTML = `
+        <div class="slide-inner">
+          <div class="cover-eye">Quintessência · Programa Médico</div>
+          <div class="cover-logo">NUMEN</div>
+          <div class="cover-tagline">Arquitetura de autoridade para cirurgiões plásticos</div>
+          <div class="cover-rule"></div>
+          <div class="cover-desc">Antes de construir sua presença, precisamos entender quem você é — com profundidade e autenticidade.</div>
+        </div>`;
+    }
+
+    else if(s.type === 'intro-g') {
+      div.innerHTML = `
+        <div class="slide-inner">
+          <div class="si-tag">Briefing 01 · Autoridade clínica</div>
+          <div class="si-name">Dr. <em>Gibran</em></div>
+          <div class="si-spec">Cirurgião plástico · Especialista em face · Referência nacional e internacional</div>
+          <div class="si-intro">Este briefing é seu. Cada resposta vai moldar a narrativa do projeto — a forma como o mercado vai te ver e reconhecer.</div>
+        </div>`;
+    }
+
+    else if(s.type === 'intro-f') {
+      div.innerHTML = `
+        <div class="slide-inner">
+          <div class="si-tag">Briefing 02 · Autoridade comercial</div>
+          <div class="si-name">Dra. <em>Fernanda</em></div>
+          <div class="si-spec">Médica anestesiologista · Pilar estratégico do processo comercial</div>
+          <div class="si-intro">Este espaço é seu. Suas respostas vão moldar como o projeto vai traduzir a sua presença — autêntica, médica, humana e estratégica.</div>
+        </div>`;
+    }
+
+    else if(s.type === 'q') {
+      const id = s.who + s.n;
+      div.innerHTML = `
+        <div class="slide-inner">
+          <div class="q-meta">
+            <span class="q-num">${s.n < 10 ? '0' + s.n : s.n}</span>
+            <span class="q-cat">${s.cat}${s.req ? ' · obrigatório' : ''}</span>
+          </div>
+          <div class="q-text">${s.q}</div>
+          ${s.hint ? `<div class="q-hint">${s.hint}</div>` : ''}
+          <textarea class="qa" id="qa-${id}" placeholder="Escreva aqui..." oninput="saveAns('${s.who}',${s.n},this.value)" onkeydown="handleKey(event)"></textarea>
+          <div class="req-msg" id="req-${id}">Esta pergunta é obrigatória.</div>
+        </div>`;
+    }
+
+    else if(s.type === 'send-g') {
+      div.innerHTML = `
+        <div class="slide-inner">
+          <div class="tr-check">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(130,230,150,0.7)" stroke-width="1.5"><polyline points="20,6 9,17 4,12"/></svg>
+          </div>
+          <div class="tr-title">Briefing concluído.</div>
+          <div class="tr-sub">Dr. Gibran · Autoridade clínica</div>
+          <div class="tr-rule"></div>
+          <div class="tr-card">
+            <div class="tc-eye">O papel da Dra. Fernanda no NUMEN</div>
+            <div class="tc-title">Autoridade comercial</div>
+            <div class="tc-desc">A Dra. Fernanda será posicionada como a voz de confiança que conduz o paciente da consulta ao fechamento. Sua presença humaniza o processo, gera segurança e remove barreiras de decisão — tornando o comercial natural, não forçado.<br><br>No projeto, vamos construir uma identidade própria para ela que complementa e amplifica a autoridade do Dr. Gibran.</div>
+          </div>
+        </div>`;
+    }
+
+    else if(s.type === 'done') {
+      div.innerHTML = `
+        <div class="slide-inner">
+          <div class="done-logo">NUMEN</div>
+          <div class="done-sub">Briefings recebidos com sucesso</div>
+          <div class="done-rule"></div>
+          <div class="done-msg">Tudo que precisamos para começar já está aqui. A equipe Quintessência vai construir algo que é genuinamente seu.</div>
+          <div class="done-tags">
+            <div class="done-tag">Dr. Gibran · enviado</div>
+            <div class="done-tag">Dra. Fernanda · enviado</div>
+            <div class="done-tag">Salvo no Supabase</div>
+          </div>
+          <div class="done-sig">Quintessência Marketing · Programa NUMEN</div>
+        </div>`;
+    }
+
+    container.appendChild(div);
+  });
+}
+
+// ===== DOTS =====
+function buildDots() {
+  const wrap = document.getElementById('dots-wrap');
+  wrap.innerHTML = '';
+  SLIDES.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    d.id = 'dot-' + i;
+    wrap.appendChild(d);
+  });
+}
+
+function updateDots() {
+  SLIDES.forEach((_, i) => {
+    const d = document.getElementById('dot-' + i);
+    if(!d) return;
+    d.className = 'dot' + (i === cur ? ' active' : i < cur ? ' done' : '');
+  });
+}
+
+// ===== PROGRESS =====
+function updateProgress() {
+  const pct = TOTAL <= 1 ? 100 : Math.round((cur / (TOTAL - 1)) * 100);
+  document.getElementById('prog-fill').style.width = pct + '%';
+}
+
+// ===== STEP LABEL =====
+function updateLabel() {
+  const s = SLIDES[cur];
+  let label = '';
+  if(s.type === 'cover') label = 'Apresentação';
+  else if(s.type === 'intro-g') label = 'Dr. Gibran · Início';
+  else if(s.type === 'intro-f') label = 'Dra. Fernanda · Início';
+  else if(s.type === 'q') {
+    const name = s.who === 'g' ? 'Dr. Gibran' : 'Dra. Fernanda';
+    label = `${name} · ${s.n} / 15`;
+  }
+  else if(s.type === 'send-g') label = 'Transição';
+  else if(s.type === 'done') label = 'Concluído';
+  document.getElementById('step-label').textContent = label;
+}
+
+// ===== BOTTOM NAV =====
+function updateNav() {
+  const s = SLIDES[cur];
+  const btnBack = document.getElementById('btn-back');
+  const btnNext = document.getElementById('btn-next');
+  const kbdHint = document.getElementById('kbd-hint');
+
+  btnBack.style.visibility = cur === 0 ? 'hidden' : 'visible';
+  btnNext.classList.remove('loading','success');
+
+  if(s.type === 'done') {
+    btnNext.style.display = 'none';
+    kbdHint.style.display = 'none';
+  } else if(s.type === 'send-g') {
+    btnNext.innerHTML = `Enviar briefing do Dr. Gibran <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>`;
+    kbdHint.style.display = 'none';
+    btnNext.style.display = '';
+  } else if(s.type === 'done') {
+    btnNext.style.display = 'none';
+  } else {
+    const isLast = SLIDES[cur+1] && SLIDES[cur+1].type === 'done';
+    const isFSend = isLast || (s.type === 'q' && s.who === 'f' && s.n === 15);
+    if(s.type === 'q' && s.who === 'f' && s.n === 15) {
+      btnNext.innerHTML = `Enviar briefing da Dra. Fernanda <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>`;
+      kbdHint.style.display = 'none';
+    } else {
+      btnNext.innerHTML = `Avançar <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg>`;
+      kbdHint.style.display = '';
+    }
+    btnNext.style.display = '';
+  }
+}
+
+// ===== RENDER =====
+function render() {
+  document.getElementById('slides').style.transform = `translateX(-${cur * 100}%)`;
+  updateDots();
+  updateProgress();
+  updateLabel();
+  updateNav();
+
+  // auto-focus textarea
+  setTimeout(() => {
+    const s = SLIDES[cur];
+    if(s.type === 'q') {
+      const ta = document.getElementById('qa-' + s.who + s.n);
+      if(ta) ta.focus();
+    }
+  }, 460);
+}
+
+// ===== SAVE ANSWER =====
+function saveAns(who, n, val) {
+  R[who]['q' + n] = val.trim();
+}
+
+// ===== VALIDATE CURRENT =====
+function validate() {
+  const s = SLIDES[cur];
+  if(s.type !== 'q' || !s.req) return true;
+  const id = s.who + s.n;
+  const val = (R[s.who]['q' + s.n] || '').trim();
+  const reqEl = document.getElementById('req-' + id);
+  const ta = document.getElementById('qa-' + id);
+  if(val.length < 3) {
+    ta && ta.classList.add('err');
+    reqEl && reqEl.classList.add('show');
+    ta && ta.focus();
+    return false;
+  }
+  ta && ta.classList.remove('err');
+  reqEl && reqEl.classList.remove('show');
+  return true;
+}
+
+// ===== NAVIGATION =====
+function prev() {
+  if(cur > 0) { cur--; render(); }
+}
+
+async function next() {
+  const s = SLIDES[cur];
+
+  // enviar gibran
+  if(s.type === 'send-g') {
+    await enviar('gibran');
+    return;
+  }
+
+  // última pergunta fernanda — enviar
+  if(s.type === 'q' && s.who === 'f' && s.n === 15) {
+    if(!validate()) return;
+    saveFromTextarea(s);
+    await enviar('fernanda');
+    return;
+  }
+
+  if(!validate()) return;
+
+  // salva valor atual antes de sair
+  if(s.type === 'q') {
+    const ta = document.getElementById('qa-' + s.who + s.n);
+    if(ta) R[s.who]['q' + s.n] = ta.value.trim();
+  }
+
+  if(cur < TOTAL - 1) { cur++; render(); }
+}
+
+function saveFromTextarea(s) {
+  if(s.type === 'q') {
+    const ta = document.getElementById('qa-' + s.who + s.n);
+    if(ta) R[s.who]['q' + s.n] = ta.value.trim();
+  }
+}
+
+// ===== ENTER KEY =====
+function handleKey(e) {
+  if(e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    next();
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  const s = SLIDES[cur];
+  if(s && s.type === 'q') return; // textarea handles it
+  if(e.key === 'Enter' || e.key === 'ArrowRight') next();
+  if(e.key === 'ArrowLeft') prev();
+});
+
+// ===== TOAST =====
+function toast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 3500);
+}
+
+// ===== ENVIAR SUPABASE =====
+async function enviar(who) {
+  const btn = document.getElementById('btn-next');
+  btn.classList.add('loading');
+
+  const payload = {
+    medico: who,
+    criado_em: new Date().toISOString(),
+    respostas: { ...R[who === 'gibran' ? 'g' : 'f'] }
+  };
+
+  try {
+    const { error } = await db.from('numen_briefings').insert([payload]);
+    btn.classList.remove('loading');
+    if(error) {
+      toast('Erro ao salvar: ' + error.message, 'err');
+      console.error(error);
+    } else {
+      btn.classList.add('success');
+      toast(who === 'gibran' ? 'Briefing do Dr. Gibran salvo.' : 'Briefing da Dra. Fernanda salvo.', 'ok');
+      setTimeout(() => { cur++; render(); }, 900);
+    }
+  } catch(e) {
+    btn.classList.remove('loading');
+    toast('Falha na conexão com o Supabase.', 'err');
+    console.error(e);
+  }
+}
+
+// ===== INIT =====
+buildSlides();
+buildDots();
+render();
+</script>
+</body>
+</html>

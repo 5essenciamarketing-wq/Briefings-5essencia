@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NUMEN · Timeless · GC Cirúrgica Plástica</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--ink:#0d0d0c;--paper:#f5f2ec;--muted:rgba(245,242,236,.45);--gold:#c4a46b}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--ink)}
+.deck{width:100vw;height:100vh;position:relative}
+.slide{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .55s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;padding:4rem 6rem}
+.slide.active{opacity:1;pointer-events:all}
+.pips{position:fixed;right:1.8rem;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:100}
+.pip{width:4px;height:4px;border-radius:50%;background:rgba(245,242,236,.18);cursor:pointer;transition:all .3s}
+.pip.on{background:var(--gold);transform:scale(1.6)}
+.arrows{position:fixed;bottom:2rem;right:2rem;display:flex;gap:8px;z-index:100}
+.arr{width:40px;height:40px;border:1px solid rgba(245,242,236,.12);border-radius:50%;background:transparent;color:var(--paper);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;font-family:'Inter',sans-serif}
+.arr:hover{border-color:var(--gold);color:var(--gold)}
+.counter{position:fixed;bottom:2rem;left:2rem;font-family:'Inter',monospace;font-size:10px;letter-spacing:.12em;color:rgba(245,242,236,.25);z-index:100}
+.mono{font-family:'Inter',sans-serif;font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:400}
+.eyebrow{margin-bottom:1.6rem}
+.h-xl{font-family:'Cormorant Garamond',serif;font-size:clamp(44px,5.5vw,72px);font-weight:300;line-height:.98;letter-spacing:-.02em;color:var(--paper)}
+.h-xl em{font-style:italic;color:rgba(245,242,236,.38)}
+.h-lg{font-family:'Cormorant Garamond',serif;font-size:clamp(34px,4vw,52px);font-weight:300;line-height:1.08;color:var(--paper)}
+.h-lg em{font-style:italic;color:var(--gold)}
+.h-md{font-family:'Cormorant Garamond',serif;font-size:clamp(28px,3vw,40px);font-weight:300;line-height:1.15;color:var(--paper)}
+.body{font-family:'Inter',sans-serif;font-size:14px;font-weight:300;line-height:1.9;color:var(--muted)}
+.body strong{color:var(--paper);font-weight:400}
+.rule{width:28px;height:1px;background:var(--gold);display:block;margin-bottom:1.8rem}
+#s1{justify-content:flex-end;position:relative;overflow:hidden}
+#s1::before{content:'';position:absolute;top:-30%;right:-20%;width:70%;height:140%;background:radial-gradient(ellipse at center,rgba(196,164,107,.08) 0%,transparent 65%);pointer-events:none}
+.s1-bar{width:100%;height:1px;background:rgba(245,242,236,.06);margin:2rem 0}
+.s1-meta{display:flex;gap:3rem}
+.s1-meta-item .mono{margin-bottom:.4rem}
+.s1-meta-item p{font-family:'Inter',sans-serif;font-size:12px;font-weight:300;color:rgba(245,242,236,.4)}
+.s1-corner{position:absolute;top:4.5rem;right:7rem;font-family:'Inter',sans-serif;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(245,242,236,.15)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:6rem;height:100%;align-items:center}
+.stat-stack{display:flex;flex-direction:column;gap:0}
+.stat-item{padding:1.4rem 0;border-bottom:1px solid rgba(245,242,236,.06)}
+.stat-item:last-child{border-bottom:none}
+.stat-n{font-family:'Cormorant Garamond',serif;font-size:52px;font-weight:300;color:var(--paper);line-height:1}
+.stat-n span{color:var(--gold)}
+.stat-d{font-family:'Inter',sans-serif;font-size:11px;font-weight:300;color:var(--muted);margin-top:.2rem;line-height:1.5}
+.stat-d strong{color:rgba(245,242,236,.7);font-weight:400}
+.icp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(245,242,236,.05);flex:1;margin-top:1.8rem}
+.icp-col{background:var(--ink);padding:1.4rem 1.2rem}
+.icp-h{font-family:'Inter',sans-serif;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:.9rem;font-weight:400}
+.icp-li{font-family:'Inter',sans-serif;font-size:12px;font-weight:300;color:var(--muted);line-height:1.7;padding:.55rem 0;border-bottom:1px solid rgba(245,242,236,.04)}
+.icp-li:last-child{border-bottom:none}
+.icp-li strong{color:rgba(245,242,236,.8);font-weight:500;display:block;font-size:12px;margin-bottom:2px}
+.journey{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:rgba(245,242,236,.05);flex:1;margin-top:1.8rem}
+.j-step{background:var(--ink);padding:1.4rem 1rem;display:flex;flex-direction:column}
+.j-step.hl{background:rgba(196,164,107,.06)}
+.j-n{font-family:'Inter',sans-serif;font-size:9px;color:rgba(245,242,236,.15);letter-spacing:.08em;margin-bottom:.7rem}
+.j-step.hl .j-n{color:rgba(196,164,107,.4)}
+.j-t{font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:var(--paper);line-height:1.35;margin-bottom:.4rem}
+.j-step.hl .j-t{color:#d4b07a}
+.j-d{font-family:'Inter',sans-serif;font-size:11px;font-weight:300;color:rgba(245,242,236,.38);line-height:1.55;flex:1}
+.j-tag{margin-top:.7rem;font-family:'Inter',sans-serif;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:rgba(196,164,107,.5)}
+.conc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(245,242,236,.05);flex:1;margin-top:1.8rem}
+.conc-card{background:var(--ink);padding:1.4rem 1.3rem;display:flex;flex-direction:column;gap:.3rem}
+.conc-card.destaque{background:rgba(196,164,107,.06)}
+.conc-name{font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:var(--paper);line-height:1.3}
+.conc-card.destaque .conc-name{color:var(--gold)}
+.conc-handle{font-family:'Inter',sans-serif;font-size:10px;font-weight:300;color:rgba(245,242,236,.3);margin-bottom:.5rem}
+.conc-seg{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;color:var(--paper);line-height:1}
+.conc-card.destaque .conc-seg{color:var(--gold)}
+.conc-posts{font-family:'Inter',sans-serif;font-size:10px;font-weight:300;color:rgba(245,242,236,.35)}
+.conc-tag{margin-top:.5rem;font-family:'Inter',sans-serif;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:rgba(196,164,107,.5);border:1px solid rgba(196,164,107,.2);padding:2px 7px;display:inline-block;width:fit-content}
+.conc-desc{font-family:'Inter',sans-serif;font-size:11px;font-weight:300;color:rgba(245,242,236,.4);line-height:1.6;margin-top:auto;padding-top:.8rem;border-top:1px solid rgba(245,242,236,.04)}
+.rank-table{flex:1;display:flex;flex-direction:column;background:rgba(245,242,236,.03);border:1px solid rgba(245,242,236,.06);margin-top:1.8rem}
+.rank-head{display:grid;grid-template-columns:48px 1fr 140px 100px;padding:.6rem 1.2rem;border-bottom:1px solid rgba(245,242,236,.06);background:rgba(245,242,236,.02)}
+.rank-hc{font-family:'Inter',sans-serif;font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:var(--gold)}
+.rank-row{display:grid;grid-template-columns:48px 1fr 140px 100px;padding:.65rem 1.2rem;border-bottom:.5px solid rgba(245,242,236,.04);align-items:center}
+.rank-row:last-child{border-bottom:none}
+.rank-row.hl{background:rgba(196,164,107,.07)}
+.rank-pos{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:rgba(245,242,236,.18)}
+.rank-row.hl .rank-pos{color:rgba(196,164,107,.5)}
+.rank-name{font-family:'Inter',sans-serif;font-size:12px;font-weight:300;color:rgba(245,242,236,.6)}
+.rank-row.hl .rank-name{color:var(--gold);font-weight:500}
+.rank-why{font-family:'Inter',sans-serif;font-size:10px;font-weight:300;color:rgba(245,242,236,.28)}
+.rank-badge{font-family:'Inter',sans-serif;font-size:8px;padding:2px 7px;border-radius:3px}
+.rb-g{background:rgba(29,158,117,.15);color:#5DCAA5}
+.rb-r{background:rgba(226,75,74,.12);color:#F09595}
+.rb-a{background:rgba(239,159,39,.12);color:#EF9F27}
+#s6{position:relative;overflow:hidden}
+#s6::after{content:'TIMELESS';position:absolute;right:-3rem;top:50%;transform:translateY(-50%) rotate(90deg);font-family:'Cormorant Garamond',serif;font-size:160px;font-weight:300;color:rgba(245,242,236,.02);white-space:nowrap;pointer-events:none}
+.timeless-body{max-width:520px}
+.timeless-pillars{display:flex;gap:3rem;margin-top:2.5rem;padding-top:2rem;border-top:1px solid rgba(245,242,236,.06)}
+.t-pill .mono{margin-bottom:.4rem}
+.t-pill p{font-family:'Inter',sans-serif;font-size:12px;font-weight:300;color:rgba(245,242,236,.4);line-height:1.6;max-width:140px}
+.arch-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(245,242,236,.05);flex:1;margin-top:1.8rem}
+.arch-card{background:var(--ink);padding:1.5rem 1.3rem;display:flex;flex-direction:column}
+.arch-card.hl{background:rgba(196,164,107,.05)}
+.arch-idx{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:300;color:rgba(196,164,107,.22);line-height:1;margin-bottom:.7rem}
+.arch-name{font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:var(--paper);margin-bottom:.4rem;line-height:1.3}
+.arch-desc{font-family:'Inter',sans-serif;font-size:12px;font-weight:300;color:var(--muted);line-height:1.65;flex:1}
+.arch-when{font-family:'Inter',sans-serif;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:rgba(196,164,107,.4);margin-top:.9rem}
+.blocos{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:rgba(245,242,236,.05);flex:1;margin-top:1.8rem}
+.bloco{background:var(--ink);padding:1.6rem 1.1rem;display:flex;flex-direction:column;border-top:2px solid transparent}
+.bloco.on{border-top-color:var(--gold);background:rgba(196,164,107,.05)}
+.bloco-n{font-family:'Cormorant Garamond',serif;font-size:44px;font-weight:300;color:rgba(245,242,236,.06);line-height:1;margin-bottom:.9rem}
+.bloco.on .bloco-n{color:rgba(196,164,107,.2)}
+.bloco-t{font-family:'Inter',sans-serif;font-size:11px;font-weight:500;color:var(--paper);line-height:1.35;margin-bottom:.4rem}
+.bloco.on .bloco-t{color:#d4b07a}
+.bloco-d{font-family:'Inter',sans-serif;font-size:10px;font-weight:300;color:rgba(245,242,236,.35);line-height:1.55;flex:1}
+.bloco-f{margin-top:.8rem;font-family:'Inter',sans-serif;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:rgba(196,164,107,.4)}
+.cap-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(245,242,236,.05)}
+.cap{background:var(--ink);padding:1.8rem 1.4rem}
+.cap.hl{background:rgba(196,164,107,.06)}
+.cap-n{font-family:'Cormorant Garamond',serif;font-size:60px;font-weight:300;color:rgba(245,242,236,.05);line-height:1;margin-bottom:1rem}
+.cap.hl .cap-n{color:rgba(196,164,107,.2)}
+.cap-tag{font-family:'Inter',sans-serif;font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:.5rem}
+.cap-t{font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:var(--paper);margin-bottom:.4rem}
+.cap-d{font-family:'Inter',sans-serif;font-size:11px;font-weight:300;color:var(--muted);line-height:1.6}
+.funil-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:rgba(245,242,236,.05);flex:1;margin-top:1.8rem}
+.funil-c{background:var(--ink);padding:1.8rem 1.5rem;display:flex;flex-direction:column}
+.funil-c.mid{background:rgba(196,164,107,.05)}
+.funil-etapa{font-family:'Inter',sans-serif;font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:1.2rem}
+.funil-title{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:300;color:var(--paper);margin-bottom:1.2rem;line-height:1.15}
+.funil-li{font-family:'Inter',sans-serif;font-size:12px;font-weight:300;color:var(--muted);line-height:1.65;padding:.7rem 0;border-bottom:1px solid rgba(245,242,236,.05)}
+.funil-li:last-child{border-bottom:none}
+.funil-li strong{color:rgba(245,242,236,.85);font-weight:500;display:block;font-size:12px;margin-bottom:1px}
+.funil-act{margin-top:auto;padding-top:1rem;border-top:1px solid rgba(245,242,236,.05);font-family:'Inter',sans-serif;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:rgba(196,164,107,.5)}
+.fluxo{display:flex;flex-direction:column;gap:0}
+.flx{display:flex;gap:1rem;padding:.9rem 0;border-bottom:1px solid rgba(245,242,236,.05);align-items:flex-start}
+.flx:last-child{border-bottom:none}
+.flx-n{font-family:'Inter',sans-serif;font-size:9px;color:rgba(196,164,107,.4);min-width:18px;margin-top:1px}
+.flx-t{font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:var(--paper);margin-bottom:3px}
+.flx-d{font-family:'Inter',sans-serif;font-size:12px;font-weight:300;color:var(--muted);line-height:1.65}
+.papel-box{display:flex;flex-direction:column;gap:.7rem}
+.papel{display:flex;gap:.9rem;padding:.9rem 1rem;border:1px solid rgba(245,242,236,.05)}
+.papel-i{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:rgba(196,164,107,.3);line-height:1;min-width:22px}
+.papel-n{font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:var(--paper);margin-bottom:3px}
+.papel-r{font-family:'Inter',sans-serif;font-size:12px;font-weight:300;color:var(--muted);line-height:1.6}
+.ret-flow{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:rgba(245,242,236,.05);flex:1;margin-top:1.8rem}
+.ret-s{background:var(--ink);padding:1.8rem 1.3rem;display:flex;flex-direction:column}
+.ret-s.hl{background:rgba(196,164,107,.06)}
+.ret-sn{font-family:'Cormorant Garamond',serif;font-size:52px;font-weight:300;color:rgba(245,242,236,.05);line-height:1;margin-bottom:.9rem}
+.ret-s.hl .ret-sn{color:rgba(196,164,107,.18)}
+.ret-t{font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:var(--paper);margin-bottom:.4rem}
+.ret-s.hl .ret-t{color:#d4b07a}
+.ret-d{font-family:'Inter',sans-serif;font-size:12px;font-weight:300;color:var(--muted);line-height:1.65;flex:1}
+.ret-badge{margin-top:1rem;display:inline-block;padding:2px 8px;border:1px solid rgba(196,164,107,.25);font-family:'Inter',sans-serif;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);width:fit-content}
+.tl-wrap{flex:1;display:flex;flex-direction:column;border:1px solid rgba(245,242,236,.05);margin-top:1.8rem}
+.tl-head{display:grid;grid-template-columns:160px 150px 1fr 1fr 1fr 1fr;background:rgba(245,242,236,.02);border-bottom:1px solid rgba(245,242,236,.05)}
+.tl-hc{padding:.7rem 1rem;font-family:'Inter',sans-serif;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.tl-row{display:grid;grid-template-columns:160px 150px 1fr 1fr 1fr 1fr;border-bottom:1px solid rgba(245,242,236,.03)}
+.tl-row:last-child{border-bottom:none}
+.tl-c{padding:.7rem 1rem;font-family:'Inter',sans-serif;font-size:11px;font-weight:300;color:rgba(245,242,236,.35);border-right:1px solid rgba(245,242,236,.03);display:flex;align-items:center;gap:6px;line-height:1.4}
+.tl-c:last-child{border-right:none}
+.tl-c.cat{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:rgba(245,242,236,.2)}
+.tl-c.phase{color:rgba(196,164,107,.5)}
+.tl-c.on{color:var(--paper)}
+.tl-c.gold{color:var(--gold)}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0}
+.kpi-li{display:flex;gap:1.2rem;padding:.9rem 0;border-bottom:1px solid rgba(245,242,236,.05)}
+.kpi-li:last-child{border-bottom:none}
+.kpi-freq{font-family:'Inter',sans-serif;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);min-width:80px;margin-top:1px;flex-shrink:0}
+.kpi-w{font-family:'Inter',sans-serif;font-size:11px;font-weight:300;color:var(--muted);line-height:1.6}
+.kpi-w strong{color:var(--paper);font-weight:400}
+.tr-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(245,242,236,.05);flex:1;margin-top:1.8rem}
+.tr-col{background:var(--ink);padding:1.6rem}
+.tr-col-h{font-family:'Inter',sans-serif;font-size:8px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:1rem;padding-bottom:.6rem;border-bottom:1px solid rgba(245,242,236,.05)}
+.tr-col-h.fl{color:#1D9E75}
+.tr-col-h.sp{color:#378ADD}
+.tr-mrow{display:flex;justify-content:space-between;align-items:baseline;padding:.38rem 0;border-bottom:.5px solid rgba(245,242,236,.04);gap:1rem}
+.tr-mrow:last-child{border-bottom:none}
+.tr-ml{font-family:'Inter',sans-serif;font-size:10px;font-weight:300;color:rgba(245,242,236,.38);flex:1}
+.tr-mv{font-family:'Inter',sans-serif;font-size:11px;font-weight:500;white-space:nowrap}
+.tr-mv.g{color:#1D9E75}.tr-mv.b{color:#378ADD}.tr-mv.a{color:#EF9F27}.tr-mv.r{color:#E24B4A}
+.tr-phases{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(245,242,236,.05);margin-top:1px}
+.tr-ph{background:var(--ink);padding:1rem 1.2rem}
+.tr-ph-t{font-family:'Inter',sans-serif;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:.6rem}
+.tr-ph-r{display:flex;justify-content:space-between;padding:.25rem 0;border-bottom:.5px solid rgba(245,242,236,.04)}
+.tr-ph-r:last-child{border-bottom:none}
+.tr-ph-l{font-family:'Inter',sans-serif;font-size:10px;font-weight:300;color:rgba(245,242,236,.3)}
+.tr-ph-v{font-family:'Inter',sans-serif;font-size:10px;font-weight:500;color:rgba(245,242,236,.65)}
+.tr-note{font-family:'Inter',sans-serif;font-size:9px;color:rgba(245,242,236,.2);margin-top:1rem;letter-spacing:.02em;line-height:1.6}
+.acao-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:rgba(245,242,236,.05);flex:1;margin-top:1.8rem}
+.acao-col{background:var(--ink);padding:1.5rem;display:flex;flex-direction:column}
+.acao-col.hl{background:rgba(196,164,107,.05)}
+.acao-head{font-family:'Inter',sans-serif;font-size:8px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:1rem;padding-bottom:.7rem;border-bottom:1px solid rgba(245,242,236,.05)}
+.acao-li{display:flex;gap:.8rem;padding:.7rem 0;border-bottom:.5px solid rgba(245,242,236,.04)}
+.acao-li:last-child{border-bottom:none}
+.acao-date{font-family:'Inter',sans-serif;font-size:9px;min-width:60px;flex-shrink:0;margin-top:1px;font-weight:400}
+.acao-t{font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:var(--paper);margin-bottom:2px}
+.acao-d{font-family:'Inter',sans-serif;font-size:11px;font-weight:300;color:var(--muted);line-height:1.6}
+.prx-grid{display:grid;grid-template-columns:1fr 1fr;gap:4rem;height:100%;align-items:start}
+.prx-col-h{font-family:'Inter',sans-serif;font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:1.4rem}
+.prx-li{display:flex;gap:1rem;padding:.85rem 0;border-bottom:1px solid rgba(245,242,236,.05)}
+.prx-li:last-child{border-bottom:none}
+.prx-date{font-family:'Inter',sans-serif;font-size:9px;letter-spacing:.06em;color:var(--gold);min-width:72px;margin-top:2px;flex-shrink:0}
+.prx-t{font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:var(--paper);margin-bottom:2px}
+.prx-d{font-family:'Inter',sans-serif;font-size:11px;font-weight:300;color:var(--muted);line-height:1.55}
+.prx-off{border-left:2px solid rgba(245,242,236,.06);padding-left:.8rem}
+.prx-off .prx-date{color:rgba(245,242,236,.2)}
+.prx-off .prx-t{color:rgba(245,242,236,.35)}
+#s18{justify-content:center;position:relative;overflow:hidden}
+#s18::after{content:'TIMELESS';position:absolute;right:-3rem;top:50%;transform:translateY(-50%) rotate(90deg);font-family:'Cormorant Garamond',serif;font-size:170px;font-weight:300;color:rgba(245,242,236,.018);white-space:nowrap;pointer-events:none}
+</style>
+</head>
+<body>
+<div class="pips" id="pips"></div>
+<div class="counter" id="cnt">01 / 18</div>
+<div class="arrows">
+  <button class="arr" onclick="go(-1)">&#8592;</button>
+  <button class="arr" onclick="go(1)">&#8594;</button>
+</div>
+<div class="deck">
+
+<!-- 01 CAPA -->
+<div class="slide active" id="s1">
+  <div class="s1-corner">NUMEN · 2026</div>
+  <div style="flex:1"></div>
+  <h1 class="h-xl">GC Cirúrgica<br><em>Plástica</em></h1>
+  <div class="s1-bar"></div>
+  <div class="s1-meta">
+    <div class="s1-meta-item"><p class="mono">Produto</p><p>NUMEN</p></div>
+    <div class="s1-meta-item"><p class="mono">Campanha</p><p>Timeless</p></div>
+    <div class="s1-meta-item"><p class="mono">Início</p><p>17 Abril 2026</p></div>
+    <div class="s1-meta-item"><p class="mono">Duração</p><p>4 meses</p></div>
+    <div class="s1-meta-item"><p class="mono">Agência</p><p>Quintessência</p></div>
+  </div>
+</div>
+
+<!-- 02 O MERCADO -->
+<div class="slide" id="s2">
+  <div class="two-col" style="height:100%">
+    <div>
+      <p class="mono eyebrow">O cenário</p>
+      <h2 class="h-lg">O médico certo.<br>O momento <em>certo.</em></h2>
+      <div style="height:2rem"></div>
+      <p class="body">10 anos dedicados exclusivamente ao rosto.<br>Fellowship internacional. Técnica própria.<br><br>100% dos pacientes vinham de um único parceiro.<br><strong>Essa dependência acabou.</strong><br><br>O NUMEN constrói o sistema que torna<br>o Dr. Gibran independente e escalável.</p>
+    </div>
+    <div class="stat-stack">
+      <div class="stat-item"><div class="stat-n">2<span>,3M</span></div><div class="stat-d"><strong>Procedimentos/ano no Brasil</strong><br>2º maior mercado global</div></div>
+      <div class="stat-item"><div class="stat-n">+<span>18%</span></div><div class="stat-d"><strong>Crescimento facial ao ano</strong><br>O segmento mais aquecido</div></div>
+      <div class="stat-item"><div class="stat-n">R$<span>70K</span></div><div class="stat-d"><strong>Ticket médio por procedimento</strong><br>Compatível com o ICP mapeado</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 03 ESTUDO DO PACIENTE -->
+<div class="slide" id="s3">
+  <p class="mono eyebrow">Bloco 01 · Estudo do paciente ideal</p>
+  <h2 class="h-md">Quem decide<br>fazer essa cirurgia.</h2>
+  <div class="icp-grid">
+    <div class="icp-col">
+      <div class="icp-h">Perfil</div>
+      <div class="icp-li"><strong>42–65 anos</strong>Executivas, empreendedoras, profissionais liberais</div>
+      <div class="icp-li"><strong>Classe A e B</strong>Renda compatível com ticket de R$65–80K</div>
+      <div class="icp-li"><strong>Instagram diário</strong>Consome conteúdo médico antes de pesquisar</div>
+    </div>
+    <div class="icp-col">
+      <div class="icp-h">Dores reais</div>
+      <div class="icp-li"><strong>Envelhecimento invisível</strong>"Cansada de parecer cansada"</div>
+      <div class="icp-li"><strong>Comparação constante</strong>Fotos antigas. Amigas que "se cuidaram".</div>
+      <div class="icp-li"><strong>Perda de confiança</strong>Aparência afetando trabalho e autoestima</div>
+    </div>
+    <div class="icp-col">
+      <div class="icp-h">Desejo oculto</div>
+      <div class="icp-li"><strong>Validação discreta</strong>Ser notada sem que percebam que fez</div>
+      <div class="icp-li"><strong>Recuperar uma versão</strong>Não aos 20 — como era aos 38</div>
+      <div class="icp-li"><strong>Silêncio mental</strong>Quer parar de pensar nisso</div>
+    </div>
+    <div class="icp-col">
+      <div class="icp-h">O que trava</div>
+      <div class="icp-li"><strong>Ficar artificial</strong>Medo número 1 — associa ao exagero</div>
+      <div class="icp-li"><strong>Erro médico</strong>Alimentado por casos viralizados</div>
+      <div class="icp-li"><strong>Julgamento social</strong>Família, trabalho, o que vão achar</div>
+    </div>
+  </div>
+</div>
+
+<!-- 04 JORNADA -->
+<div class="slide" id="s4">
+  <p class="mono eyebrow">Bloco 01 · Jornada de compra</p>
+  <h2 class="h-md">Do incômodo à cirurgia<br>em 7 estágios.</h2>
+  <div class="journey">
+    <div class="j-step"><div class="j-n">01</div><div class="j-t">Despertar</div><div class="j-d">Um evento catalisa. Foto, comentário, data marcante. A dor vira consciente.</div><div class="j-tag">Emocional</div></div>
+    <div class="j-step"><div class="j-n">02</div><div class="j-t">Consumo passivo</div><div class="j-d">Segue perfis sem intenção. O algoritmo percebe e entrega mais.</div><div class="j-tag">Instagram</div></div>
+    <div class="j-step hl"><div class="j-n">03</div><div class="j-t">Pesquisa ativa</div><div class="j-d">Google, grupos, indicação em privado. Avalia o procedimento, não o médico.</div><div class="j-tag">Google · WPP</div></div>
+    <div class="j-step hl"><div class="j-n">04</div><div class="j-t">Seleção</div><div class="j-d">Lista mental de 3–6 médicos. Feed, estética, presença. Elimina quem não passa no olhar.</div><div class="j-tag">Instagram</div></div>
+    <div class="j-step"><div class="j-n">05</div><div class="j-t">Consulta</div><div class="j-d">Não vai para ser convencida. Vai para confirmar. "O médico me ouviu?"</div><div class="j-tag">Presencial</div></div>
+    <div class="j-step hl"><div class="j-n">06</div><div class="j-t">Decisão</div><div class="j-d">Escolhe por segurança e estética. Preço é limite, não critério.</div><div class="j-tag">Fernanda</div></div>
+    <div class="j-step"><div class="j-n">07</div><div class="j-t">Pós-cirurgia</div><div class="j-d">Satisfeita, vira a melhor vendedora. O funil recomeça.</div><div class="j-tag">Retenção</div></div>
+  </div>
+</div>
+
+<!-- 05 CONCORRENTES -->
+<div class="slide" id="s5">
+  <p class="mono eyebrow">Análise competitiva · Instagram Florianópolis</p>
+  <h2 class="h-md">O campo de batalha.<br>Dados reais.</h2>
+  <div class="conc-grid">
+    <div class="conc-card">
+      <div class="conc-name">Dr. Fernando Mattioli</div>
+      <div class="conc-handle">@dr.fernandomattioli</div>
+      <div class="conc-seg">132K</div>
+      <div class="conc-posts">710 posts · Verificado</div>
+      <div class="conc-tag">Facelift Deep Plane · SP/SC</div>
+      <div class="conc-desc">Domina o Google e o Instagram. 5 residências médicas. Maior ameaça digital do nicho facial em SC.</div>
+    </div>
+    <div class="conc-card">
+      <div class="conc-name">Dr. Rogério Gomes</div>
+      <div class="conc-handle">@doutorrogeriogomes</div>
+      <div class="conc-seg">26,8K</div>
+      <div class="conc-posts">1.790 posts · Verificado</div>
+      <div class="conc-tag">Generalista · 28 anos exp.</div>
+      <div class="conc-desc">Maior autoridade local. Generalista — não especialista exclusivo em face. Volume alto, diferencial fraco.</div>
+    </div>
+    <div class="conc-card">
+      <div class="conc-name">Dr. Guilherme Pintarelli</div>
+      <div class="conc-handle">@dr.guilhermepintarelli</div>
+      <div class="conc-seg">24,3K</div>
+      <div class="conc-posts">1.043 posts · Verificado</div>
+      <div class="conc-tag">Facelift Deep Plane · Direto</div>
+      <div class="conc-desc">Concorrente mais direto no nicho facial. Mesmo prédio (Trompowsky). Comunicação fria e genérica.</div>
+    </div>
+    <div class="conc-card">
+      <div class="conc-name">Dr. Waldir Carreirão</div>
+      <div class="conc-handle">@drwaldircarreiraoneto</div>
+      <div class="conc-seg">13,7K</div>
+      <div class="conc-posts">689 posts · Verificado</div>
+      <div class="conc-tag">Rinoplastia · Facial · USP</div>
+      <div class="conc-desc">Doutorado USP, Professor UFSC. Foco em rinoplastia. Otorrino. Não compete diretamente em facelift.</div>
+    </div>
+    <div class="conc-card">
+      <div class="conc-name">Dr. Gustavo Mauro</div>
+      <div class="conc-handle">@drgustavomauro</div>
+      <div class="conc-seg">1,8K</div>
+      <div class="conc-posts">39 posts</div>
+      <div class="conc-tag">Deep Plane · Floripa/Curitiba</div>
+      <div class="conc-desc">Instagram fraco mas domina o Google com site específico "liftdefaceflorianopolis.com.br". SEO agressivo.</div>
+    </div>
+    <div class="conc-card">
+      <div class="conc-name">Clínica Scipioni</div>
+      <div class="conc-handle">@clinica_scipioni</div>
+      <div class="conc-seg">2,5K</div>
+      <div class="conc-posts">772 posts</div>
+      <div class="conc-tag">Dermatologia · Cirurgia Plástica</div>
+      <div class="conc-desc">Multispecialidade. Forte no Google para "rejuvenescimento Floripa". Não tem médico protagonista.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 06 RANKING GOOGLE -->
+<div class="slide" id="s6">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:4rem;height:100%">
+    <div style="display:flex;flex-direction:column">
+      <p class="mono eyebrow">Google · "facelift Florianópolis"</p>
+      <h2 class="h-md" style="margin-bottom:1.5rem">Posição de<br>cada player.</h2>
+      <div class="rank-table">
+        <div class="rank-head">
+          <div class="rank-hc">Pos</div>
+          <div class="rank-hc">Quem aparece</div>
+          <div class="rank-hc">Por quê</div>
+          <div class="rank-hc">Status</div>
+        </div>
+        <div class="rank-row"><div class="rank-pos">1</div><div class="rank-name">liftdefaceflorianopolis.com.br</div><div class="rank-why">Site criado só para rankar</div><div><span class="rank-badge rb-r">SEO agressivo</span></div></div>
+        <div class="rank-row"><div class="rank-pos">2</div><div class="rank-name">Clínica Scipioni</div><div class="rank-why">Página dedicada Deep Plane</div><div><span class="rank-badge rb-a">Página dedicada</span></div></div>
+        <div class="rank-row"><div class="rank-pos">3</div><div class="rank-name">Clínica Carreirao</div><div class="rank-why">Otimização local</div><div><span class="rank-badge rb-a">SEO local</span></div></div>
+        <div class="rank-row"><div class="rank-pos">4</div><div class="rank-name">Dr. Fernando Mattioli</div><div class="rank-why">Blog com múltiplos artigos</div><div><span class="rank-badge rb-r">Blog forte</span></div></div>
+        <div class="rank-row"><div class="rank-pos">5</div><div class="rank-name">Dr. Rogério Gomes</div><div class="rank-why">Domínio antigo, backlinks</div><div><span class="rank-badge rb-a">Autoridade</span></div></div>
+        <div class="rank-row hl"><div class="rank-pos">—</div><div class="rank-name">Dr. Gibran Chedid</div><div class="rank-why">Sem página de procedimento</div><div><span class="rank-badge rb-r">Não aparece</span></div></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column">
+      <p class="mono eyebrow">O gap que ninguém ocupou</p>
+      <h2 class="h-md" style="margin-bottom:1.5rem">21K seguidores.<br><em>42 posts.</em></h2>
+      <p class="body" style="margin-bottom:2rem">O Dr. Gibran tem o maior potencial de audiência do nicho facial em Florianópolis com a menor produção de conteúdo. Isso significa que cada post que ele publica gera resultado acima da média do mercado — sem estratégia estruturada.<br><br>Com NUMEN e Timeless, esse ativo vira sistema.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(245,242,236,.05)">
+        <div style="background:var(--ink);padding:1.2rem">
+          <div style="font-family:'Inter',sans-serif;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:.5rem">Nenhum concorrente tem</div>
+          <p style="font-family:'Inter',sans-serif;font-size:12px;font-weight:300;color:rgba(245,242,236,.55);line-height:1.7">Técnica exclusiva em face + conceito de marca + comunicação com personalidade</p>
+        </div>
+        <div style="background:rgba(196,164,107,.06);padding:1.2rem">
+          <div style="font-family:'Inter',sans-serif;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:.5rem">O espaço está vazio</div>
+          <p style="font-family:'Inter',sans-serif;font-size:12px;font-weight:300;color:rgba(245,242,236,.55);line-height:1.7">Pintarelli tem a especialização mas não tem comunicação. Mattioli tem o Google mas não Floripa como base.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 07 TIMELESS -->
+<div class="slide" id="s7">
+  <p class="mono eyebrow">Bloco 03 · A campanha</p>
+  <div class="timeless-body">
+    <h2 class="h-xl" style="margin-bottom:1.5rem">Timeless<br>é <em>Identidade.</em></h2>
+    <p class="body">Quem quer se ver bem no espelho<br>está <strong>muito vivo por dentro.</strong><br><br>O que somos pulsa dentro de nós.<br>O que somos por dentro <strong>não envelhece.</strong><br><br>A cirurgia facial não é vaidade.<br>É o gesto de quem alinha a aparência<br>com a <strong>vitalidade que já existe.</strong></p>
+    <div class="timeless-pillars">
+      <div class="t-pill"><p class="mono">Tom</p><p>Leve, sereno e autêntico</p></div>
+      <div class="t-pill"><p class="mono">Estética</p><p>Clássico, cult, atemporal</p></div>
+      <div class="t-pill"><p class="mono">Posição</p><p>Naturalidade como assinatura</p></div>
+      <div class="t-pill"><p class="mono">Conceito</p><p>Autoconfiança e legado</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- 08 ARQUITETURA -->
+<div class="slide" id="s8">
+  <p class="mono eyebrow">Bloco 02 · Arquitetura do projeto</p>
+  <h2 class="h-md">Seis ferramentas.<br>Um ecossistema integrado.</h2>
+  <div class="arch-grid">
+    <div class="arch-card"><div class="arch-idx">01</div><div class="arch-name">CRM web</div><div class="arch-desc">Gestão de leads, funil e acompanhamento. Desenvolvido internamente pela Quintessência.</div><div class="arch-when">Mai 2026</div></div>
+    <div class="arch-card"><div class="arch-idx">02</div><div class="arch-name">API WhatsApp + filtro</div><div class="arch-desc">Lead qualificado automaticamente antes de chegar na Cristiane.</div><div class="arch-when">Mai 2026</div></div>
+    <div class="arch-card"><div class="arch-idx">03</div><div class="arch-name">Landing page</div><div class="arch-desc">Ponto de chegada de todos os anúncios. Conectada ao CRM e ao WhatsApp.</div><div class="arch-when">Mai 2026</div></div>
+    <div class="arch-card hl"><div class="arch-idx">04</div><div class="arch-name">Meta Ads · funil completo</div><div class="arch-desc">Topo, meio e fundo. 1 criativo novo por semana. Otimizado pelo leilão real.</div><div class="arch-when">Abr 2026</div></div>
+    <div class="arch-card hl"><div class="arch-idx">05</div><div class="arch-name">App avaliação + indicação</div><div class="arch-desc">Avaliação → elogio → indicação → cashback. Um fluxo. Sistema próprio.</div><div class="arch-when">Mai 2026</div></div>
+    <div class="arch-card"><div class="arch-idx">06</div><div class="arch-name">Planilhas SQL</div><div class="arch-desc">Rastreabilidade completa. Origem → lead → consulta → cirurgia.</div><div class="arch-when">Contínuo</div></div>
+  </div>
+</div>
+
+<!-- 09 OS 7 BLOCOS -->
+<div class="slide" id="s9">
+  <p class="mono eyebrow">O método NUMEN</p>
+  <h2 class="h-md">7 blocos. Um sistema<br>que se constrói sobre si mesmo.</h2>
+  <div class="blocos">
+    <div class="bloco"><div class="bloco-n">01</div><div class="bloco-t">Estudo do paciente</div><div class="bloco-d">ICP, jornada e comportamento mapeados antes de qualquer ação.</div><div class="bloco-f">Concluído</div></div>
+    <div class="bloco"><div class="bloco-n">02</div><div class="bloco-t">Arquitetura</div><div class="bloco-d">CRM, API, landing page e sistema de indicação configurados.</div><div class="bloco-f">Mai 07</div></div>
+    <div class="bloco"><div class="bloco-n">03</div><div class="bloco-t">Estratégia</div><div class="bloco-d">Campanha Timeless, linha editorial dos 4 meses, captações.</div><div class="bloco-f">Mai 07</div></div>
+    <div class="bloco on"><div class="bloco-n">04</div><div class="bloco-t">Tráfego com funil</div><div class="bloco-d">Topo, meio e fundo. 1 criativo/semana. Dados decidem a escala.</div><div class="bloco-f">4 meses</div></div>
+    <div class="bloco"><div class="bloco-n">05</div><div class="bloco-t">Atendimento</div><div class="bloco-d">Filtro automático. Cristiane vende. Fernanda fecha.</div><div class="bloco-f">Contínuo</div></div>
+    <div class="bloco"><div class="bloco-n">06</div><div class="bloco-t">A consulta</div><div class="bloco-d">Paciente chega preparado. Gibran escuta. Orçamento no mesmo dia.</div><div class="bloco-f">Contínuo</div></div>
+    <div class="bloco"><div class="bloco-n">07</div><div class="bloco-t">Retenção</div><div class="bloco-d">Avaliação → indicação → cashback. Sistema que cresce sozinho.</div><div class="bloco-f">Contínuo</div></div>
+  </div>
+</div>
+
+<!-- 10 CAPTAÇÕES -->
+<div class="slide" id="s10">
+  <p class="mono eyebrow">Bloco 03 · Produção de conteúdo</p>
+  <h2 class="h-md">4 captações.<br>1 criativo por semana.</h2>
+  <div style="height:1.5rem"></div>
+  <div class="cap-grid">
+    <div class="cap hl"><div class="cap-n">01</div><div class="cap-tag">Terça 22/04 · Urgente</div><div class="cap-t">Locação cinematográfica</div><div class="cap-d">Roteiro Timeless / Peak Performance. Off em voz. Cenas no bloco operatório.</div></div>
+    <div class="cap hl"><div class="cap-n">02</div><div class="cap-tag">Quarta 23/04 · Urgente</div><div class="cap-t">Consultório</div><div class="cap-d">Autoridade no ambiente clínico. Fernanda presente. Humaniza a equipe.</div></div>
+    <div class="cap"><div class="cap-n">03</div><div class="cap-tag">Mês 2 · A definir</div><div class="cap-t">Captação 3</div><div class="cap-d">Conforme performance das primeiras semanas. Foco em meio ou fundo de funil.</div></div>
+    <div class="cap"><div class="cap-n">04</div><div class="cap-tag">Mês 3–4 · A definir</div><div class="cap-t">Cases e depoimentos</div><div class="cap-d">Prova social de alto impacto. Pacientes reais em vídeo. Alimenta a conversão.</div></div>
+  </div>
+  <p style="margin-top:1.5rem;font-family:Inter,sans-serif;font-size:11px;font-weight:300;color:rgba(245,242,236,.3)">Criativos híbridos — mesmo material para anúncio pago e orgânico no Instagram.</p>
+</div>
+
+<!-- 11 FUNIL -->
+<div class="slide" id="s11">
+  <p class="mono eyebrow">Bloco 04 · Tráfego pago</p>
+  <h2 class="h-md">Três estágios.<br>Cada anúncio no lugar certo.</h2>
+  <div class="funil-cols">
+    <div class="funil-c"><div class="funil-etapa">Topo · Descoberta</div><div class="funil-title">Quem ainda<br>não conhece.</div><div class="funil-li"><strong>Público</strong>Frio — mulheres 38–65, SC e região, interesses em estética.</div><div class="funil-li"><strong>Formato</strong>Criativos cinematográficos das captações 1 e 2. Tom Timeless.</div><div class="funil-li"><strong>Objetivo</strong>Aquecer a conta. Construir audiência.</div><div class="funil-act">Ativa · Semana da captação</div></div>
+    <div class="funil-c mid"><div class="funil-etapa">Meio · Nutrição</div><div class="funil-title">Quem conhece<br>mas pondera.</div><div class="funil-li"><strong>Público</strong>Morno — interagiu com o perfil, assistiu vídeo.</div><div class="funil-li"><strong>Formato</strong>Educação técnica, before/after, Fernanda.</div><div class="funil-li"><strong>Objetivo</strong>Aprofundar confiança. Eliminar objeções.</div><div class="funil-act">Ativa · Mês 1</div></div>
+    <div class="funil-c"><div class="funil-etapa">Fundo · Conversão</div><div class="funil-title">Quem está<br>pronta para agir.</div><div class="funil-li"><strong>Público</strong>Quente — visitou LP, salvou posts, assistiu 75%+.</div><div class="funil-li"><strong>Formato</strong>CTA direto para WhatsApp. Cases com resultado.</div><div class="funil-li"><strong>Objetivo</strong>Lead qualificado para a Cristiane.</div><div class="funil-act">Ativa · Mês 2</div></div>
+  </div>
+</div>
+
+<!-- 12 ATENDIMENTO -->
+<div class="slide" id="s12">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:4rem;height:100%">
+    <div style="display:flex;flex-direction:column">
+      <p class="mono eyebrow">Bloco 05 · Atendimento</p>
+      <h2 class="h-md" style="margin-bottom:2rem">Do lead<br>à consulta.</h2>
+      <div class="fluxo">
+        <div class="flx"><div class="flx-n">01</div><div><div class="flx-t">Lead entra no WhatsApp</div><div class="flx-d">Via anúncio, bio ou landing page. Origem registrada no CRM.</div></div></div>
+        <div class="flx"><div class="flx-n">02</div><div><div class="flx-t">Filtro automático</div><div class="flx-d">API qualifica. Remove leads desalinhados.</div></div></div>
+        <div class="flx"><div class="flx-n">03</div><div><div class="flx-t">Cristiane — vende a consulta</div><div class="flx-d">Resposta em menos de 1h. Fecha o agendamento.</div></div></div>
+        <div class="flx"><div class="flx-n">04</div><div><div class="flx-t">Consulta com Dr. Gibran</div><div class="flx-d">Escuta ativa. Casos semelhantes. Confiança construída.</div></div></div>
+        <div class="flx"><div class="flx-n">05</div><div><div class="flx-t">Fernanda — orçamento imediato</div><div class="flx-d">Logo após a consulta. Autoridade do conteúdo chega antes dela.</div></div></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;justify-content:center">
+      <p class="mono eyebrow">Papéis</p>
+      <div class="papel-box">
+        <div class="papel"><div class="papel-i">G</div><div><div class="papel-n">Dr. Gibran — rosto e autoridade</div><div class="papel-r">Grava 2–3 vídeos por semana. Conduz consultas com escuta ativa.</div></div></div>
+        <div class="papel"><div class="papel-i">F</div><div><div class="papel-n">Fernanda — autoridade e orçamento</div><div class="papel-r">Conteúdo humanizado constrói confiança. Passa o orçamento imediatamente após a consulta.</div></div></div>
+        <div class="papel"><div class="papel-i">C</div><div><div class="papel-n">Cristiane — vende a consulta</div><div class="papel-r">Responde o lead e fecha o agendamento. Primeiro contato humano da jornada.</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 13 RETENÇÃO -->
+<div class="slide" id="s13">
+  <p class="mono eyebrow">Bloco 07 · Retenção e indicações</p>
+  <h2 class="h-md">A paciente operada<br>é o melhor anúncio.</h2>
+  <div class="ret-flow">
+    <div class="ret-s"><div class="ret-sn">01</div><div class="ret-t">Cirurgia</div><div class="ret-d">Fernanda presente no pré, durante e no pós. Acompanhamento total.</div></div>
+    <div class="ret-s"><div class="ret-sn">02</div><div class="ret-t">Avaliação</div><div class="ret-d">Recebe link para avaliar e deixar elogio ao Dr. Gibran. Alimenta Google.</div></div>
+    <div class="ret-s hl"><div class="ret-sn">03</div><div class="ret-t">Indicação</div><div class="ret-d">Após avaliar, o sistema apresenta o programa. Natural, não invasivo.</div><div class="ret-badge">Sistema Quintessência</div></div>
+    <div class="ret-s"><div class="ret-sn">04</div><div class="ret-t">Conversão</div><div class="ret-d">A indicada agenda e vira paciente. Origem registrada automaticamente.</div></div>
+    <div class="ret-s hl"><div class="ret-sn">05</div><div class="ret-t">Recompensa</div><div class="ret-d">Cashback ou procedimento. Fideliza e incentiva novas indicações.</div><div class="ret-badge">Cashback ou procedimento</div></div>
+  </div>
+</div>
+
+<!-- 14 TIMELINE -->
+<div class="slide" id="s14">
+  <p class="mono eyebrow">Cronograma</p>
+  <h2 class="h-md">4 meses.<br>Cada semana com propósito.</h2>
+  <div class="tl-wrap">
+    <div class="tl-head">
+      <div class="tl-hc">Frente</div><div class="tl-hc">Prep · Abr 17–Mai 07</div><div class="tl-hc">Retorno · Mai 17+</div><div class="tl-hc">Mês 2 · Junho</div><div class="tl-hc">Mês 3 · Julho</div><div class="tl-hc">Mês 4 · Agosto</div>
+    </div>
+    <div class="tl-row"><div class="tl-c cat">Conteúdo</div><div class="tl-c phase"><span class="dot"></span>Linha editorial + ICP</div><div class="tl-c on"><span class="dot"></span>1 criativo/sem · Timeless</div><div class="tl-c on"><span class="dot"></span>1 criativo/sem · Meio</div><div class="tl-c on"><span class="dot"></span>1 criativo/sem · Cases</div><div class="tl-c on"><span class="dot"></span>1 criativo/sem · Conversão</div></div>
+    <div class="tl-row"><div class="tl-c cat">Captações</div><div class="tl-c phase"><span class="dot"></span>Cap 1 Ter + Cap 2 Qua</div><div class="tl-c on"><span class="dot"></span>Caps 1 e 2 em rotação</div><div class="tl-c on"><span class="dot"></span>Captação 3</div><div class="tl-c on"><span class="dot"></span>Captação 4</div><div class="tl-c">Rotação</div></div>
+    <div class="tl-row"><div class="tl-c cat">Tráfego</div><div class="tl-c phase"><span class="dot"></span>Análise leilão SC</div><div class="tl-c on"><span class="dot"></span>Topo ativo</div><div class="tl-c on"><span class="dot"></span>Topo + Meio</div><div class="tl-c on"><span class="dot"></span>Funil completo</div><div class="tl-c gold"><span class="dot"></span>Funil em escala</div></div>
+    <div class="tl-row"><div class="tl-c cat">Ferramentas</div><div class="tl-c phase"><span class="dot"></span>CRM + API + Landing</div><div class="tl-c on"><span class="dot"></span>App indicação live</div><div class="tl-c on"><span class="dot"></span>Operação integrada</div><div class="tl-c on"><span class="dot"></span>Sistema autônomo</div><div class="tl-c on"><span class="dot"></span>Revisão e escala</div></div>
+    <div class="tl-row"><div class="tl-c cat">Disponibilidade</div><div class="tl-c phase"><span class="dot"></span>Quintessência executa</div><div class="tl-c" style="color:rgba(245,242,236,.2)">08–16/05 viagem</div><div class="tl-c gold"><span class="dot"></span>Retorno 17/05</div><div class="tl-c on"><span class="dot"></span>Operação plena</div><div class="tl-c on"><span class="dot"></span>Operação plena</div></div>
+  </div>
+</div>
+
+<!-- 15 TRÁFEGO / PRAÇAS -->
+<div class="slide" id="s15">
+  <p class="mono eyebrow">Bloco 04 · Cenários de tráfego</p>
+  <h2 class="h-md">Dois mercados.<br>Uma decisão baseada em dados.</h2>
+  <div class="tr-grid">
+    <div class="tr-col"><div class="tr-col-h fl">Florianópolis — entrada imediata</div><div class="tr-mrow"><span class="tr-ml">CPM estimado (público A/B, mulheres 40–65)</span><span class="tr-mv g">R$15–28</span></div><div class="tr-mrow"><span class="tr-ml">CPL mês 1–2 (conta nova)</span><span class="tr-mv a">R$140–220</span></div><div class="tr-mrow"><span class="tr-ml">CPL mês 3–4 (conta madura)</span><span class="tr-mv g">R$80–140</span></div><div class="tr-mrow"><span class="tr-ml">Cirurgias/mês estimadas (mês 3+)</span><span class="tr-mv g">7–15</span></div><div class="tr-mrow"><span class="tr-ml">CAC por cirurgia</span><span class="tr-mv g">R$400–500</span></div><div class="tr-mrow"><span class="tr-ml">Investimento recomendado/mês</span><span class="tr-mv g">R$6.000–8.000</span></div><div class="tr-mrow"><span class="tr-ml">Concorrência no leilão</span><span class="tr-mv g">Baixo–moderado</span></div></div>
+    <div class="tr-col"><div class="tr-col-h sp">SP Faria Lima — expansão mês 4+</div><div class="tr-mrow"><span class="tr-ml">CPM estimado (público A/B, mulheres 40–65)</span><span class="tr-mv r">R$35–65</span></div><div class="tr-mrow"><span class="tr-ml">CPL mês 1–2 (conta nova)</span><span class="tr-mv r">R$500–900</span></div><div class="tr-mrow"><span class="tr-ml">CPL mês 3–4 (conta madura)</span><span class="tr-mv a">R$280–480</span></div><div class="tr-mrow"><span class="tr-ml">Cirurgias/mês estimadas (mês 4+)</span><span class="tr-mv b">5–8</span></div><div class="tr-mrow"><span class="tr-ml">CAC por cirurgia</span><span class="tr-mv a">R$2.100–3.000</span></div><div class="tr-mrow"><span class="tr-ml">Investimento mínimo eficiente/mês</span><span class="tr-mv r">R$15.000–20.000</span></div><div class="tr-mrow"><span class="tr-ml">Concorrência no leilão</span><span class="tr-mv r">Muito alto</span></div></div>
+  </div>
+  <div class="tr-phases">
+    <div class="tr-ph"><div class="tr-ph-t">Abr–Mai · Aprendizagem</div><div class="tr-ph-r"><span class="tr-ph-l">Floripa</span><span class="tr-ph-v" style="color:#1D9E75">R$4–5K · topo</span></div><div class="tr-ph-r"><span class="tr-ph-l">SP</span><span class="tr-ph-v" style="color:#EF9F27">R$2–3K · semente</span></div></div>
+    <div class="tr-ph"><div class="tr-ph-t">Jun · Floripa converte</div><div class="tr-ph-r"><span class="tr-ph-l">Floripa</span><span class="tr-ph-v" style="color:#1D9E75">R$6K · funil</span></div><div class="tr-ph-r"><span class="tr-ph-l">SP</span><span class="tr-ph-v" style="color:#EF9F27">R$4K · leads</span></div></div>
+    <div class="tr-ph"><div class="tr-ph-t">Jul–Ago · Dados decidem</div><div class="tr-ph-r"><span class="tr-ph-l">Floripa</span><span class="tr-ph-v" style="color:#1D9E75">R$8K · escala</span></div><div class="tr-ph-r"><span class="tr-ph-l">SP</span><span class="tr-ph-v" style="color:#378ADD">R$8–12K · maturando</span></div></div>
+  </div>
+  <p class="tr-note">CPM Brasil: US$3,33 média · Superads $3B em ad spend · CPL médico global US$60,95 · Wordstream 2025 · Ajuste fiscal Meta +12,15% · LC 214/2025</p>
+</div>
+
+<!-- 16 COMPROMISSO E KPIs -->
+<div class="slide" id="s16">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:4rem;height:100%">
+    <div>
+      <p class="mono eyebrow">Nosso compromisso</p>
+      <h2 class="h-lg" style="margin-bottom:2rem">Entregamos<br>o <em>método.</em></h2>
+      <p class="body" style="margin-bottom:2rem">O compromisso é com a execução completa dos 7 blocos. Os resultados são consequência do sistema funcionando.</p>
+      <div style="display:flex;flex-direction:column;gap:0">
+        <div style="padding:1rem 0;border-bottom:1px solid rgba(245,242,236,.05)"><div style="font-family:Inter,sans-serif;font-size:12px;font-weight:500;color:var(--paper);margin-bottom:.3rem">Estudo · Arquitetura · Estratégia</div><div style="font-family:Inter,sans-serif;font-size:11px;font-weight:300;color:var(--muted);line-height:1.6">Os três primeiros blocos entregues antes da execução.</div></div>
+        <div style="padding:1rem 0;border-bottom:1px solid rgba(245,242,236,.05)"><div style="font-family:Inter,sans-serif;font-size:12px;font-weight:500;color:var(--paper);margin-bottom:.3rem">Tráfego · Atendimento · Consulta</div><div style="font-family:Inter,sans-serif;font-size:11px;font-weight:300;color:var(--muted);line-height:1.6">Funil completo operando. Lead qualificado chegando.</div></div>
+        <div style="padding:1rem 0"><div style="font-family:Inter,sans-serif;font-size:12px;font-weight:500;color:var(--paper);margin-bottom:.3rem">Retenção · Indicação · Autonomia</div><div style="font-family:Inter,sans-serif;font-size:11px;font-weight:300;color:var(--muted);line-height:1.6">Sistema que cresce sem depender de um único canal.</div></div>
+      </div>
+    </div>
+    <div>
+      <p class="mono eyebrow">O que medimos</p>
+      <div style="display:flex;flex-direction:column;gap:0;margin-top:1.5rem">
+        <div class="kpi-li"><div class="kpi-freq">Semanal</div><div class="kpi-w"><strong>Leads, consultas e fechamentos.</strong> Fernanda revisa toda segunda no CRM.</div></div>
+        <div class="kpi-li"><div class="kpi-freq">Quinzenal</div><div class="kpi-w"><strong>Instagram e Meta Ads.</strong> Salvamentos, CPL, DMs recebidos.</div></div>
+        <div class="kpi-li"><div class="kpi-freq">Mensal</div><div class="kpi-w"><strong>Revisão completa do funil.</strong> Onde estão as perdas?</div></div>
+        <div class="kpi-li"><div class="kpi-freq">Ferramenta</div><div class="kpi-w"><strong>CRM Quintessência + SQL.</strong> Origem → lead → consulta → cirurgia.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 17 PLANO DE AÇÃO -->
+<div class="slide" id="s17">
+  <p class="mono eyebrow">Plano de ação · Semanas 1–8</p>
+  <h2 class="h-md">Três frentes simultâneas.<br>Do dia 1 ao funil completo.</h2>
+  <div class="acao-grid">
+    <div class="acao-col">
+      <div class="acao-head" style="color:#1D9E75">Cristiane · SEO e reputação Google</div>
+      <div class="acao-li"><div class="acao-date" style="color:#1D9E75">Hoje</div><div><div class="acao-t">Avaliações Google — urgente</div><div class="acao-d">Mensagem para toda a base de pacientes. Meta: 15 na semana 1, 30 até 07/05.</div></div></div>
+      <div class="acao-li"><div class="acao-date" style="color:#1D9E75">Sem 1–2</div><div><div class="acao-t">Google Meu Negócio</div><div class="acao-d">Fotos, descrição, especialidade, horários. Aparecer no Maps em "facelift Florianópolis".</div></div></div>
+      <div class="acao-li"><div class="acao-date" style="color:#1D9E75">Sem 3–4</div><div><div class="acao-t">Responder todas as avaliações</div><div class="acao-d">Toda avaliação respondida pelo Dr. Gibran pessoalmente. Sinal de autoridade para o Google.</div></div></div>
+      <div class="acao-li"><div class="acao-date" style="color:#1D9E75">Sem 5–8</div><div><div class="acao-t">Página de procedimento no site</div><div class="acao-d">"Facelift em Florianópolis — Dr. Gibran Chedid". Otimizada para os termos que os concorrentes dominam.</div></div></div>
+      <div class="acao-li"><div class="acao-date" style="color:#1D9E75">Contínuo</div><div><div class="acao-t">Fluxo automático pós-cirurgia</div><div class="acao-d">App de avaliação dispara após o pós-op. Reputação Google cresce sem esforço manual.</div></div></div>
+    </div>
+    <div class="acao-col hl">
+      <div class="acao-head" style="color:var(--gold)">Quintessência · Captações e criativo</div>
+      <div class="acao-li"><div class="acao-date" style="color:var(--gold)">Ter 22/04</div><div><div class="acao-t">Captação 1 — cinematográfica</div><div class="acao-d">Roteiro Peak Performance. Off em voz. Cenas no bloco operatório. Timeless em ação.</div></div></div>
+      <div class="acao-li"><div class="acao-date" style="color:var(--gold)">Qua 23/04</div><div><div class="acao-t">Captação 2 — consultório</div><div class="acao-d">Autoridade e humanização. Fernanda presente. Ambiente clínico de alto padrão.</div></div></div>
+      <div class="acao-li"><div class="acao-date" style="color:var(--gold)">Até 30/04</div><div><div class="acao-t">1° criativo de descoberta no ar</div><div class="acao-d">Topo de funil ativo. Objetivo: aquecer a conta do Meta. Público frio, tom Timeless.</div></div></div>
+      <div class="acao-li"><div class="acao-date" style="color:var(--gold)">Sem 3–4</div><div><div class="acao-t">2° e 3° criativos — autoridade</div><div class="acao-d">Educação técnica + Fernanda falando sobre segurança. Meio de funil em construção.</div></div></div>
+      <div class="acao-li"><div class="acao-date" style="color:var(--gold)">Sem 5–8</div><div><div class="acao-t">Before/after + depoimento</div><div class="acao-d">Prova social. Fundo de funil em construção. CTA suave para WhatsApp.</div></div></div>
+    </div>
+    <div class="acao-col">
+      <div class="acao-head" style="color:#378ADD">Meta Ads · Do descoberta ao funil</div>
+      <div class="acao-li"><div class="acao-date" style="color:#378ADD">Sem 1–2</div><div><div class="acao-t">Descoberta — topo ativo</div><div class="acao-d">1 campanha. Alcance/visualização. Mulheres 40–65 Floripa + litoral SC. Conta aquecendo.</div></div></div>
+      <div class="acao-li"><div class="acao-date" style="color:#378ADD">Sem 3–4</div><div><div class="acao-t">Análise de leilão SC</div><div class="acao-d">CPM real, CTR, custo por resultado. Dados que calibram o investimento.</div></div></div>
+      <div class="acao-li"><div class="acao-date" style="color:#378ADD">Sem 5–6</div><div><div class="acao-t">Meio de funil ativo</div><div class="acao-d">Retargeting de quem interagiu. Conteúdo educativo e autoridade. Audiência mornando.</div></div></div>
+      <div class="acao-li"><div class="acao-date" style="color:#378ADD">Sem 7–8</div><div><div class="acao-t">Fundo de funil — conversão</div><div class="acao-d">CTA para WhatsApp. Público quente. Lead qualificado chega na Cristiane. Funil completo.</div></div></div>
+      <div class="acao-li"><div class="acao-date" style="color:#378ADD">Mês 2+</div><div><div class="acao-t">SP Faria Lima — semente</div><div class="acao-d">Conta SP aquecendo. Pixel aprendendo. Escala decidida em agosto pelos dados.</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 18 ENCERRAMENTO -->
+<div class="slide" id="s18">
+  <div style="flex:1"></div>
+  <p class="mono" style="margin-bottom:2rem">NUMEN · Quintessência · 2026</p>
+  <h2 class="h-xl">O que pulsa<br>por dentro<br><em>não envelhece.</em></h2>
+  <div class="rule" style="margin-top:2rem;margin-bottom:2rem"></div>
+  <p class="body" style="max-width:400px">A GC Cirúrgica Plástica tem o produto,<br>tem a técnica, tem a filosofia.<br>Agora tem o sistema.<br><br><strong>Bem-vindos ao Timeless.</strong></p>
+  <div style="height:3rem"></div>
+  <p style="font-family:Inter,sans-serif;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(245,242,236,.15)">Quintessência Marketing · Bagé, RS · Abril 2026</p>
+</div>
+
+</div>
+<script>
+let c=0,total=18;
+const slides=document.querySelectorAll('.slide');
+const pipsEl=document.getElementById('pips');
+const cnt=document.getElementById('cnt');
+for(let i=0;i<total;i++){
+  const p=document.createElement('div');
+  p.className='pip'+(i===0?' on':'');
+  p.onclick=()=>goTo(i);
+  pipsEl.appendChild(p);
+}
+function goTo(n){
+  slides[c].classList.remove('active');
+  pipsEl.children[c].classList.remove('on');
+  c=Math.max(0,Math.min(n,total-1));
+  slides[c].classList.add('active');
+  pipsEl.children[c].classList.add('on');
+  cnt.textContent=String(c+1).padStart(2,'0')+' / 18';
+}
+function go(d){goTo(c+d)}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' ')go(1);
+  if(e.key==='ArrowLeft')go(-1);
+});
+</script>
+</body>
+</html>

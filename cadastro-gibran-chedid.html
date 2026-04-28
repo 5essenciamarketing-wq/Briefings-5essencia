@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Cadastro · Gibran Chedid</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+:root {
+  --black: #0a0a0a;
+  --white: #f8f6f2;
+  --gold: #c9a96e;
+  --gray: #777;
+  --border: #222;
+  --input-bg: #131313;
+  --error: #c0392b;
+}
+
+html, body {
+  height: 100%;
+  background: var(--black);
+  color: var(--white);
+  font-family: 'Jost', sans-serif;
+  font-weight: 300;
+  overflow: hidden;
+}
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px;
+  background: var(--gold);
+  transition: width 0.5s cubic-bezier(.4,0,.2,1);
+  z-index: 100;
+}
+
+.counter {
+  position: fixed;
+  top: 14px; right: 20px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--gray);
+  z-index: 100;
+}
+
+.back-btn {
+  position: fixed;
+  top: 10px; left: 16px;
+  background: none;
+  border: none;
+  color: var(--gray);
+  font-size: 20px;
+  cursor: pointer;
+  z-index: 100;
+  padding: 6px;
+  display: none;
+  line-height: 1;
+}
+
+/* ── SLIDES ── */
+.slides {
+  height: 100vh;
+  width: 100%;
+  position: relative;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 28px 40px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(60px);
+  transition: opacity 0.45s cubic-bezier(.4,0,.2,1), transform 0.45s cubic-bezier(.4,0,.2,1);
+}
+
+.slide.active {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateX(0);
+}
+
+.slide.exit-left {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-60px);
+  transition: opacity 0.32s ease, transform 0.32s ease;
+}
+
+/* ── INTRO ── */
+.slide-intro .logo-mark {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 64px;
+  font-weight: 300;
+  letter-spacing: -2px;
+  line-height: 1;
+  margin-bottom: 14px;
+}
+.slide-intro .logo-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 300;
+  letter-spacing: 1px;
+}
+.slide-intro .logo-sub {
+  font-size: 9px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--gray);
+  margin-top: 6px;
+  margin-bottom: 32px;
+}
+.gold-line {
+  width: 36px; height: 1px;
+  background: var(--gold);
+  margin: 0 auto 28px;
+  opacity: .6;
+}
+.slide-intro p {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 17px;
+  color: var(--gray);
+  text-align: center;
+  line-height: 1.75;
+  max-width: 280px;
+  margin-bottom: 44px;
+}
+
+/* ── STEP NUM ── */
+.step-num {
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  align-self: flex-start;
+}
+
+.question {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 300;
+  line-height: 1.3;
+  margin-bottom: 6px;
+  align-self: flex-start;
+  max-width: 360px;
+}
+
+.question-sub {
+  font-size: 12px;
+  color: var(--gray);
+  letter-spacing: 0.3px;
+  margin-bottom: 30px;
+  align-self: flex-start;
+}
+
+/* ── INPUT ── */
+.input-wrap { width: 100%; max-width: 400px; }
+
+.slide input[type=text],
+.slide input[type=email],
+.slide input[type=date] {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--white);
+  font-family: 'Jost', sans-serif;
+  font-size: 22px;
+  font-weight: 300;
+  padding: 12px 2px;
+  outline: none;
+  transition: border-color .3s;
+  -webkit-appearance: none;
+  border-radius: 0;
+}
+
+.slide input::placeholder { color: #2a2a2a; }
+.slide input:focus { border-bottom-color: var(--gold); }
+.slide input.err { border-bottom-color: var(--error) !important; }
+
+.err-msg {
+  font-size: 11px;
+  color: var(--error);
+  margin-top: 8px;
+  display: none;
+  letter-spacing: 0.5px;
+}
+
+/* ── NEXT BTN ── */
+.next-btn {
+  margin-top: 26px;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--white);
+  font-family: 'Jost', sans-serif;
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  padding: 14px 32px;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: border-color .2s, color .2s;
+  border-radius: 0;
+}
+.next-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ── OPTIONS ── */
+.options-grid {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.radio-pair {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  gap: 10px;
+}
+
+.opt-card {
+  width: 100%;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  color: var(--white);
+  font-family: 'Jost', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  letter-spacing: 0.3px;
+  padding: 15px 18px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color .2s, background .2s;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.opt-card .opt-icon {
+  width: 26px; height: 26px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--gray);
+  flex-shrink: 0;
+  transition: all .2s;
+}
+
+.radio-pair .opt-card { flex: 1; justify-content: center; text-align: center; }
+
+.opt-card:hover { border-color: var(--gold); }
+.opt-card:hover .opt-icon { border-color: var(--gold); color: var(--gold); }
+.opt-card.selected { border-color: var(--gold); background: rgba(201,169,110,.07); }
+.opt-card.selected .opt-icon { background: var(--gold); border-color: var(--gold); color: var(--black); }
+
+/* ── CTA ── */
+.cta-btn {
+  background: var(--white);
+  color: var(--black);
+  border: none;
+  padding: 18px 48px;
+  font-family: 'Jost', sans-serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background .2s;
+  border-radius: 0;
+}
+.cta-btn:hover { background: var(--gold); }
+
+/* ── LOADING ── */
+.slide-loading .spinner {
+  width: 32px; height: 32px;
+  border: 2px solid var(--border);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+  margin-bottom: 24px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.slide-loading p {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  color: var(--gray);
+  font-size: 18px;
+}
+
+/* ── SUCCESS ── */
+.slide-success .success-ring {
+  width: 64px; height: 64px;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  color: var(--gold);
+  margin-bottom: 28px;
+}
+.slide-success h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px;
+  font-weight: 300;
+  margin-bottom: 14px;
+  text-align: center;
+}
+.slide-success p {
+  color: var(--gray);
+  font-size: 14px;
+  line-height: 1.8;
+  text-align: center;
+  max-width: 280px;
+}
+
+/* ── HINT ── */
+.hint {
+  position: fixed;
+  bottom: 22px; left: 0; right: 0;
+  text-align: center;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #282828;
+  text-transform: uppercase;
+  transition: opacity .3s;
+}
+
+/* ── RESUMO ── */
+.resumo-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+.resumo-key {
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--gray);
+  flex-shrink: 0;
+  padding-right: 12px;
+}
+.resumo-val {
+  font-size: 13px;
+  text-align: right;
+  word-break: break-word;
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progress"></div>
+<div class="counter" id="counter"></div>
+<button class="back-btn" id="back-btn" onclick="goBack()">←</button>
+
+<div class="slides">
+
+  <!-- 0: INTRO -->
+  <div class="slide slide-intro active" data-index="0">
+    <div class="logo-mark">GC</div>
+    <div class="logo-name">Gibran Chedid</div>
+    <div class="logo-sub">Cirurgião Plástico</div>
+    <div class="gold-line"></div>
+    <p>Preencha seus dados para confirmarmos o agendamento da sua consulta.</p>
+    <button class="cta-btn" onclick="goNext()">Começar</button>
+  </div>
+
+  <!-- 1: NOME -->
+  <div class="slide" data-index="1">
+    <div class="step-num">01 / 12</div>
+    <div class="question">Qual é o seu nome completo?</div>
+    <div class="question-sub">Informe seu nome como no documento</div>
+    <div class="input-wrap">
+      <input type="text" id="f-nome" placeholder="Nome Completo" autocomplete="name"
+        onkeydown="if(event.key==='Enter')vText('f-nome','err-nome')">
+      <div class="err-msg" id="err-nome">Por favor, informe seu nome</div>
+    </div>
+    <button class="next-btn" onclick="vText('f-nome','err-nome')">Continuar →</button>
+  </div>
+
+  <!-- 2: CPF -->
+  <div class="slide" data-index="2">
+    <div class="step-num">02 / 12</div>
+    <div class="question">Qual é o seu CPF?</div>
+    <div class="question-sub">Somente números</div>
+    <div class="input-wrap">
+      <input type="text" id="f-cpf" placeholder="000.000.000-00" maxlength="14" inputmode="numeric"
+        onkeydown="if(event.key==='Enter')vCPF()">
+      <div class="err-msg" id="err-cpf">CPF inválido — verifique os dígitos</div>
+    </div>
+    <button class="next-btn" onclick="vCPF()">Continuar →</button>
+  </div>
+
+  <!-- 3: NASCIMENTO -->
+  <div class="slide" data-index="3">
+    <div class="step-num">03 / 12</div>
+    <div class="question">Data de nascimento</div>
+    <div class="question-sub">Selecione a data</div>
+    <div class="input-wrap">
+      <input type="date" id="f-nasc" onchange="if(this.value)setTimeout(goNext,350)">
+      <div class="err-msg" id="err-nasc">Informe a data de nascimento</div>
+    </div>
+    <button class="next-btn" onclick="vDate('f-nasc','err-nasc')">Continuar →</button>
+  </div>
+
+  <!-- 4: EMAIL -->
+  <div class="slide" data-index="4">
+    <div class="step-num">04 / 12</div>
+    <div class="question">Qual é o seu e-mail?</div>
+    <div class="question-sub">Para enviarmos confirmações</div>
+    <div class="input-wrap">
+      <input type="email" id="f-email" placeholder="seu@email.com" inputmode="email" autocomplete="email"
+        onkeydown="if(event.key==='Enter')vEmail()">
+      <div class="err-msg" id="err-email">E-mail inválido</div>
+    </div>
+    <button class="next-btn" onclick="vEmail()">Continuar →</button>
+  </div>
+
+  <!-- 5: CEP -->
+  <div class="slide" data-index="5">
+    <div class="step-num">05 / 12</div>
+    <div class="question">Qual é o seu CEP?</div>
+    <div class="question-sub">Preencheremos o endereço automaticamente</div>
+    <div class="input-wrap">
+      <input type="text" id="f-cep" placeholder="00000-000" maxlength="9" inputmode="numeric"
+        oninput="maskCEP(this)" onblur="buscaCEP()"
+        onkeydown="if(event.key==='Enter')vCEP()">
+      <div class="err-msg" id="err-cep">CEP inválido</div>
+    </div>
+    <button class="next-btn" onclick="vCEP()">Continuar →</button>
+  </div>
+
+  <!-- 6: ENDEREÇO -->
+  <div class="slide" data-index="6">
+    <div class="step-num">06 / 12</div>
+    <div class="question">Confirme seu endereço</div>
+    <div class="question-sub">Rua, número e bairro · Cidade</div>
+    <div class="input-wrap" style="display:flex;flex-direction:column;gap:18px;">
+      <div>
+        <input type="text" id="f-end" placeholder="Rua, número, bairro"
+          onkeydown="if(event.key==='Enter')document.getElementById('f-cidade').focus()">
+        <div class="err-msg" id="err-end">Informe o endereço</div>
+      </div>
+      <div>
+        <input type="text" id="f-cidade" placeholder="Cidade"
+          onkeydown="if(event.key==='Enter')vEnd()">
+        <div class="err-msg" id="err-cidade">Informe a cidade</div>
+      </div>
+    </div>
+    <button class="next-btn" onclick="vEnd()">Continuar →</button>
+  </div>
+
+  <!-- 7: PROFISSÃO -->
+  <div class="slide" data-index="7">
+    <div class="step-num">07 / 12</div>
+    <div class="question">Qual é a sua profissão?</div>
+    <div class="question-sub">Campo opcional</div>
+    <div class="input-wrap">
+      <input type="text" id="f-prof" placeholder="Ex: Professora, Empresário…"
+        onkeydown="if(event.key==='Enter')goNext()">
+    </div>
+    <button class="next-btn" onclick="goNext()">Continuar →</button>
+  </div>
+
+  <!-- 8: ESTADO CIVIL -->
+  <div class="slide" data-index="8">
+    <div class="step-num">08 / 12</div>
+    <div class="question">Estado civil</div>
+    <div class="question-sub">Selecione uma opção</div>
+    <div class="options-grid">
+      <button class="opt-card" onclick="selectOpt(this,'f-ecivil','Solteiro(a)')"><span class="opt-icon">S</span> Solteiro(a)</button>
+      <button class="opt-card" onclick="selectOpt(this,'f-ecivil','Casado(a)')"><span class="opt-icon">C</span> Casado(a)</button>
+      <button class="opt-card" onclick="selectOpt(this,'f-ecivil','Divorciado(a)')"><span class="opt-icon">D</span> Divorciado(a)</button>
+      <button class="opt-card" onclick="selectOpt(this,'f-ecivil','Viúvo(a)')"><span class="opt-icon">V</span> Viúvo(a)</button>
+      <button class="opt-card" onclick="selectOpt(this,'f-ecivil','União Estável')"><span class="opt-icon">U</span> União Estável</button>
+    </div>
+    <input type="hidden" id="f-ecivil">
+  </div>
+
+  <!-- 9: CIRURGIA -->
+  <div class="slide" data-index="9">
+    <div class="step-num">09 / 12</div>
+    <div class="question">Qual cirurgia você deseja?</div>
+    <div class="question-sub">Descreva o procedimento de interesse</div>
+    <div class="input-wrap">
+      <input type="text" id="f-cir" placeholder="Ex: Rinoplastia, Mamoplastia…"
+        onkeydown="if(event.key==='Enter')vText('f-cir','err-cir')">
+      <div class="err-msg" id="err-cir">Informe a cirurgia desejada</div>
+    </div>
+    <button class="next-btn" onclick="vText('f-cir','err-cir')">Continuar →</button>
+  </div>
+
+  <!-- 10: CONVÊNIO -->
+  <div class="slide" data-index="10">
+    <div class="step-num">10 / 12</div>
+    <div class="question">Possui convênio médico?</div>
+    <div class="radio-pair">
+      <button class="opt-card" onclick="selectOpt(this,'f-conv','Sim')"><span class="opt-icon">✓</span> Sim</button>
+      <button class="opt-card" onclick="selectOpt(this,'f-conv','Não')"><span class="opt-icon">✗</span> Não</button>
+    </div>
+    <input type="hidden" id="f-conv">
+  </div>
+
+  <!-- 11: INDICAÇÃO -->
+  <div class="slide" data-index="11">
+    <div class="step-num">11 / 12</div>
+    <div class="question">Como nos conheceu?</div>
+    <div class="question-sub">Nome de quem indicou ou canal (Instagram, Google…)</div>
+    <div class="input-wrap">
+      <input type="text" id="f-ind" placeholder="Ex: Dra. Ana, Instagram…"
+        onkeydown="if(event.key==='Enter')goNext()">
+    </div>
+    <button class="next-btn" onclick="goNext()">Continuar →</button>
+  </div>
+
+  <!-- 12: REVISÃO -->
+  <div class="slide" data-index="12" style="justify-content:flex-start;padding-top:70px;overflow-y:auto;">
+    <div class="step-num" style="margin-top:10px;">12 / 12</div>
+    <div class="question">Tudo certo?</div>
+    <div class="question-sub">Revise e confirme seus dados</div>
+    <div id="resumo" style="width:100%;max-width:400px;margin-bottom:28px;"></div>
+    <button class="cta-btn" onclick="enviar()" style="align-self:flex-start;margin-bottom:40px;">Confirmar Agendamento</button>
+  </div>
+
+  <!-- LOADING -->
+  <div class="slide slide-loading" data-index="13">
+    <div class="spinner"></div>
+    <p>Enviando seus dados…</p>
+  </div>
+
+  <!-- SUCESSO -->
+  <div class="slide slide-success" data-index="14">
+    <div class="success-ring">✓</div>
+    <h2>Dados Recebidos</h2>
+    <p>Suas informações foram registradas com sucesso.<br>Em breve nossa equipe entrará em contato para confirmar o agendamento.</p>
+  </div>
+
+</div>
+
+<div class="hint" id="hint">Pressione Enter para avançar</div>
+
+<script>
+// ─────────────────────────────────────────────
+//  ⚠️  COLE AQUI A URL DO SEU GOOGLE APPS SCRIPT
+// ─────────────────────────────────────────────
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyWgFNOLOpGbVIsHDtHxwr1yIT1gs-6vGRWeOSgTvbaS31LCvbZvzvO9hesJrejtpWA/exec';
+// ─────────────────────────────────────────────
+
+const TOTAL = 12;
+let current = 0;
+const allSlides = document.querySelectorAll('.slide');
+
+function updateUI() {
+  const pct = current === 0 ? 0 : Math.round((current / TOTAL) * 100);
+  document.getElementById('progress').style.width = pct + '%';
+  document.getElementById('counter').textContent = (current > 0 && current <= TOTAL) ? `${current} / ${TOTAL}` : '';
+  document.getElementById('back-btn').style.display = (current > 0 && current <= TOTAL) ? 'block' : 'none';
+  document.getElementById('hint').style.opacity = (current >= 1 && current <= 7) ? '1' : '0';
+}
+
+function goTo(next) {
+  if (next === current) return;
+  if (next === 12) buildResumo();
+
+  allSlides[current].classList.add('exit-left');
+  allSlides[current].classList.remove('active');
+
+  setTimeout(() => {
+    allSlides[current].classList.remove('exit-left');
+    current = next;
+    allSlides[current].classList.add('active');
+    updateUI();
+    const inp = allSlides[current].querySelector('input[type=text],input[type=email],input[type=date]');
+    if (inp && current < 12) setTimeout(() => inp.focus(), 400);
+  }, 340);
+}
+
+function goNext() { goTo(current + 1); }
+function goBack() { if (current > 0 && current <= TOTAL) goTo(current - 1); }
+
+/* ── VALIDAÇÕES ── */
+function vText(id, errId) {
+  const el = document.getElementById(id);
+  const ok = el.value.trim().length > 0;
+  el.classList.toggle('err', !ok);
+  document.getElementById(errId).style.display = ok ? 'none' : 'block';
+  if (ok) goNext();
+}
+
+function vCPF() {
+  const el = document.getElementById('f-cpf');
+  const raw = el.value.replace(/\D/g,'');
+  const ok = raw.length === 11;
+  el.classList.toggle('err', !ok);
+  document.getElementById('err-cpf').style.display = ok ? 'none' : 'block';
+  if (ok) goNext();
+}
+
+function vDate(id, errId) {
+  const el = document.getElementById(id);
+  const ok = !!el.value;
+  el.classList.toggle('err', !ok);
+  document.getElementById(errId).style.display = ok ? 'none' : 'block';
+  if (ok) goNext();
+}
+
+function vEmail() {
+  const el = document.getElementById('f-email');
+  const ok = el.value.includes('@') && el.value.includes('.');
+  el.classList.toggle('err', !ok);
+  document.getElementById('err-email').style.display = ok ? 'none' : 'block';
+  if (ok) goNext();
+}
+
+function vCEP() {
+  const el = document.getElementById('f-cep');
+  const ok = el.value.replace(/\D/g,'').length === 8;
+  el.classList.toggle('err', !ok);
+  document.getElementById('err-cep').style.display = ok ? 'none' : 'block';
+  if (ok) goNext();
+}
+
+function vEnd() {
+  const e = document.getElementById('f-end');
+  const c = document.getElementById('f-cidade');
+  const okE = e.value.trim().length > 0;
+  const okC = c.value.trim().length > 0;
+  e.classList.toggle('err', !okE);
+  c.classList.toggle('err', !okC);
+  document.getElementById('err-end').style.display = okE ? 'none' : 'block';
+  document.getElementById('err-cidade').style.display = okC ? 'none' : 'block';
+  if (okE && okC) goNext();
+}
+
+/* ── MÁSCARAS ── */
+document.getElementById('f-cpf').addEventListener('input', function() {
+  let v = this.value.replace(/\D/g,'').substring(0,11);
+  if (v.length > 9) v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/,'$1.$2.$3-$4');
+  else if (v.length > 6) v = v.replace(/(\d{3})(\d{3})(\d{0,3})/,'$1.$2.$3');
+  else if (v.length > 3) v = v.replace(/(\d{3})(\d{0,3})/,'$1.$2');
+  this.value = v;
+});
+
+function maskCEP(el) {
+  let v = el.value.replace(/\D/g,'').substring(0,8);
+  if (v.length > 5) v = v.replace(/(\d{5})(\d{0,3})/,'$1-$2');
+  el.value = v;
+}
+
+async function buscaCEP() {
+  const cep = document.getElementById('f-cep').value.replace(/\D/g,'');
+  if (cep.length === 8) {
+    try {
+      const r = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const d = await r.json();
+      if (!d.erro) {
+        document.getElementById('f-end').value = `${d.logradouro}, ${d.bairro}`;
+        document.getElementById('f-cidade').value = d.localidade;
+      }
+    } catch(_) {}
+  }
+}
+
+/* ── OPTION CARDS ── */
+function selectOpt(btn, hiddenId, value) {
+  const parent = btn.closest('.options-grid, .radio-pair');
+  parent.querySelectorAll('.opt-card').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById(hiddenId).value = value;
+  setTimeout(goNext, 360);
+}
+
+/* ── RESUMO ── */
+function fmtDate(d) {
+  if (!d) return '—';
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+
+function buildResumo() {
+  const campos = [
+    ['Nome', document.getElementById('f-nome').value],
+    ['CPF', document.getElementById('f-cpf').value],
+    ['Nascimento', fmtDate(document.getElementById('f-nasc').value)],
+    ['E-mail', document.getElementById('f-email').value],
+    ['CEP', document.getElementById('f-cep').value],
+    ['Endereço', document.getElementById('f-end').value],
+    ['Cidade', document.getElementById('f-cidade').value],
+    ['Profissão', document.getElementById('f-prof').value || '—'],
+    ['Estado Civil', document.getElementById('f-ecivil').value || '—'],
+    ['Cirurgia', document.getElementById('f-cir').value],
+    ['Convênio', document.getElementById('f-conv').value || '—'],
+    ['Indicação', document.getElementById('f-ind').value || '—'],
+  ];
+  document.getElementById('resumo').innerHTML = campos.map(([k,v]) =>
+    `<div class="resumo-item">
+      <span class="resumo-key">${k}</span>
+      <span class="resumo-val">${v}</span>
+    </div>`
+  ).join('');
+}
+
+/* ── ENVIO ── */
+async function enviar() {
+  goTo(13);
+
+  const dados = {
+    nome: document.getElementById('f-nome').value.trim(),
+    cpf: document.getElementById('f-cpf').value.trim(),
+    nascimento: fmtDate(document.getElementById('f-nasc').value),
+    email: document.getElementById('f-email').value.trim(),
+    cep: document.getElementById('f-cep').value.trim(),
+    endereco: document.getElementById('f-end').value.trim(),
+    cidade: document.getElementById('f-cidade').value.trim(),
+    profissao: document.getElementById('f-prof').value.trim() || '—',
+    estadoCivil: document.getElementById('f-ecivil').value || '—',
+    cirurgia: document.getElementById('f-cir').value.trim(),
+    convenio: document.getElementById('f-conv').value || '—',
+    indicacao: document.getElementById('f-ind').value.trim() || '—',
+    dataEnvio: new Date().toLocaleString('pt-BR')
+  };
+
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dados)
+    });
+  } catch(_) {}
+
+  setTimeout(() => goTo(14), 2000);
+}
+
+updateUI();
+</script>
+</body>
+</html>

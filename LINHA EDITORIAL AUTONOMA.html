@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planejamento Editorial — @drgibranchedid</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400;500&family=Outfit:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F5F0E8;
+    --charcoal: #1C1C1E;
+    --slate: #3A3A3C;
+    --gold: #C9A96E;
+    --gold-light: #E8D5B0;
+    --gold-dark: #A07840;
+    --muted: #8A8A8E;
+    --card-bg: rgba(255,255,255,0.7);
+    --glass: rgba(255,255,255,0.45);
+    --border: rgba(201,169,110,0.25);
+    --edu: #4A7C99;    --edu-bg: #EAF2F8;
+    --result: #7A8C7E; --result-bg: #EDF3EE;
+    --auth: #9B7B4A;   --auth-bg: #F5EFE6;
+    --human: #7B6A8A;  --human-bg: #F2EEF5;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:'Outfit',sans-serif;
+    background:var(--cream);
+    color:var(--charcoal);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  body::before {
+    content:'';
+    position:fixed;
+    inset:0;
+    background:
+      radial-gradient(ellipse 80% 60% at 15% 10%, rgba(201,169,110,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 80% at 85% 90%, rgba(122,140,126,0.07) 0%, transparent 60%);
+    pointer-events:none;
+    z-index:0;
+  }
+  header {
+    position:sticky; top:0; z-index:100;
+    background:rgba(245,240,232,0.92);
+    backdrop-filter:blur(20px);
+    border-bottom:1px solid var(--border);
+    padding:0 2rem;
+  }
+  .header-inner {
+    max-width:1100px; margin:0 auto;
+    display:flex; align-items:center; justify-content:space-between;
+    height:64px; gap:1rem;
+  }
+  .logo-block { display:flex; flex-direction:column; line-height:1; }
+  .logo-name {
+    font-family:'Cormorant Garamond',serif;
+    font-size:1.35rem; font-weight:600;
+    letter-spacing:0.01em; color:var(--charcoal);
+  }
+  .logo-handle {
+    font-family:'DM Mono',monospace;
+    font-size:0.65rem; color:var(--gold-dark);
+    letter-spacing:0.08em; margin-top:2px;
+  }
+  .progress-wrap { display:flex; align-items:center; gap:0.5rem; }
+  .progress-label {
+    font-size:0.7rem; font-weight:500; color:var(--muted);
+    letter-spacing:0.06em; text-transform:uppercase;
+  }
+  .progress-bar-outer {
+    width:120px; height:4px;
+    background:var(--gold-light); border-radius:99px; overflow:hidden;
+  }
+  .progress-bar-inner {
+    height:100%;
+    background:linear-gradient(90deg, var(--gold-dark), var(--gold));
+    border-radius:99px; transition:width 0.5s ease;
+  }
+  .container {
+    position:relative; z-index:1;
+    max-width:1100px; margin:0 auto;
+    padding:2.5rem 2rem 5rem;
+  }
+  .week-selector {
+    display:flex; align-items:center; justify-content:center;
+    gap:0.5rem; margin-bottom:2.5rem; flex-wrap:wrap;
+  }
+  .week-btn {
+    font-family:'DM Mono',monospace;
+    font-size:0.72rem; letter-spacing:0.04em;
+    padding:0.4rem 0.9rem; border-radius:99px;
+    border:1.5px solid var(--border);
+    background:transparent; color:var(--muted);
+    cursor:pointer; transition:all 0.2s ease;
+  }
+  .week-btn:hover { border-color:var(--gold); color:var(--gold-dark); }
+  .week-btn.active { background:var(--charcoal); border-color:var(--charcoal); color:var(--gold); }
+  .legend {
+    display:flex; gap:1rem; flex-wrap:wrap;
+    justify-content:center; margin-bottom:2rem;
+  }
+  .legend-item {
+    display:flex; align-items:center; gap:0.4rem;
+    font-size:0.65rem; font-family:'DM Mono',monospace;
+    letter-spacing:0.05em; text-transform:uppercase; color:var(--muted);
+  }
+  .legend-dot { width:8px; height:8px; border-radius:50%; }
+  .week-header {
+    display:flex; align-items:flex-end; justify-content:space-between;
+    margin-bottom:1.75rem; padding-bottom:1.25rem;
+    border-bottom:1px solid var(--border);
+  }
+  .week-title {
+    font-family:'Cormorant Garamond',serif;
+    font-size:2.8rem; font-weight:300; line-height:1;
+  }
+  .week-title span { color:var(--gold); font-style:italic; }
+  .week-range {
+    font-family:'DM Mono',monospace;
+    font-size:0.65rem; color:var(--muted);
+    letter-spacing:0.08em; text-transform:uppercase; padding-bottom:0.5rem;
+  }
+  .posts-grid {
+    display:grid; grid-template-columns:repeat(3,1fr);
+    gap:1.25rem; margin-bottom:2rem;
+  }
+  @media(max-width:768px){
+    .posts-grid{grid-template-columns:1fr;}
+    .week-title{font-size:2rem;}
+    .progress-wrap{display:none;}
+  }
+  .post-card {
+    background:var(--card-bg);
+    border:1px solid var(--border);
+    border-radius:18px;
+    backdrop-filter:blur(10px);
+    overflow:hidden;
+    transition:transform 0.25s ease, box-shadow 0.25s ease;
+    cursor:pointer;
+  }
+  .post-card:hover { transform:translateY(-3px); box-shadow:0 12px 40px rgba(0,0,0,0.09); }
+  .post-card.expanded { transform:none; box-shadow:0 8px 32px rgba(0,0,0,0.1); }
+  .card-day-bar {
+    padding:0.75rem 1.25rem;
+    display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid var(--border);
+  }
+  .card-day {
+    font-family:'DM Mono',monospace;
+    font-size:0.65rem; font-weight:500;
+    letter-spacing:0.1em; text-transform:uppercase; color:var(--slate);
+  }
+  .pilar-badge {
+    font-size:0.6rem; font-weight:500;
+    letter-spacing:0.06em; text-transform:uppercase;
+    padding:0.25rem 0.65rem; border-radius:99px;
+  }
+  .pilar-edu    { background:var(--edu-bg);    color:var(--edu);    }
+  .pilar-result { background:var(--result-bg); color:var(--result); }
+  .pilar-auth   { background:var(--auth-bg);   color:var(--auth);   }
+  .pilar-human  { background:var(--human-bg);  color:var(--human);  }
+  .card-body { padding:1.25rem; }
+  .card-tema {
+    font-family:'Cormorant Garamond',serif;
+    font-size:1.2rem; font-weight:400;
+    line-height:1.35; color:var(--charcoal); margin-bottom:0.85rem;
+  }
+  .card-formato {
+    display:flex; align-items:center; gap:0.4rem; margin-bottom:1rem;
+  }
+  .formato-label {
+    font-family:'DM Mono',monospace;
+    font-size:0.62rem; letter-spacing:0.08em;
+    color:var(--muted); text-transform:uppercase;
+  }
+  .card-cta-block {
+    max-height:0; overflow:hidden;
+    transition:max-height 0.35s ease, opacity 0.3s ease;
+    opacity:0;
+  }
+  .post-card.expanded .card-cta-block { max-height:220px; opacity:1; }
+  .cta-label {
+    font-family:'DM Mono',monospace;
+    font-size:0.6rem; letter-spacing:0.1em;
+    text-transform:uppercase; color:var(--gold-dark); margin-bottom:0.4rem;
+  }
+  .cta-text {
+    font-size:0.82rem; line-height:1.5;
+    color:var(--slate); font-style:italic;
+    padding:0.75rem;
+    background:linear-gradient(135deg, rgba(201,169,110,0.08), rgba(201,169,110,0.04));
+    border-left:2px solid var(--gold);
+    border-radius:0 8px 8px 0;
+  }
+  .copy-btn {
+    font-family:'DM Mono',monospace;
+    font-size:0.6rem; letter-spacing:0.06em; text-transform:uppercase;
+    padding:0.35rem 0.9rem; border-radius:99px;
+    border:1px solid var(--gold); background:transparent;
+    color:var(--gold-dark); cursor:pointer;
+    transition:all 0.2s ease; margin-top:0.65rem;
+    display:block; margin-left:auto;
+  }
+  .copy-btn:hover { background:var(--gold); color:white; }
+  .card-toggle {
+    display:flex; align-items:center; justify-content:center;
+    padding:0.5rem 1.25rem 1rem; gap:0.35rem;
+    color:var(--gold-dark);
+    font-size:0.65rem; font-family:'DM Mono',monospace;
+    letter-spacing:0.06em; text-transform:uppercase;
+  }
+  .toggle-arrow { transition:transform 0.3s ease; display:inline-block; font-size:0.55rem; }
+  .post-card.expanded .toggle-arrow { transform:rotate(180deg); }
+  .stories-section { margin-top:0.5rem; }
+  .stories-heading { display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem; }
+  .stories-heading-text {
+    font-family:'DM Mono',monospace;
+    font-size:0.65rem; letter-spacing:0.1em;
+    text-transform:uppercase; color:var(--muted); white-space:nowrap;
+  }
+  .stories-heading-line { flex:1; height:1px; background:var(--border); }
+  .stories-strip { display:grid; grid-template-columns:repeat(7,1fr); gap:0.6rem; }
+  @media(max-width:768px){ .stories-strip{grid-template-columns:repeat(4,1fr);} }
+  .story-pill {
+    background:var(--glass); border:1px solid var(--border);
+    border-radius:12px; padding:0.65rem 0.5rem; text-align:center;
+    backdrop-filter:blur(8px);
+  }
+  .story-dia {
+    font-family:'DM Mono',monospace;
+    font-size:0.55rem; letter-spacing:0.08em;
+    text-transform:uppercase; color:var(--muted); margin-bottom:0.3rem;
+  }
+  .story-icon { font-size:1.1rem; display:block; margin-bottom:0.2rem; }
+  .story-tipo { font-size:0.58rem; color:var(--slate); font-weight:500; line-height:1.3; }
+  .nav-row {
+    display:flex; align-items:center; justify-content:space-between; margin-top:2.5rem;
+  }
+  .nav-btn {
+    display:flex; align-items:center; gap:0.5rem;
+    font-family:'DM Mono',monospace;
+    font-size:0.7rem; letter-spacing:0.06em; text-transform:uppercase;
+    padding:0.75rem 1.5rem; border-radius:99px;
+    border:1.5px solid var(--border);
+    background:transparent; color:var(--slate);
+    cursor:pointer; transition:all 0.2s ease;
+  }
+  .nav-btn:hover { background:var(--charcoal); border-color:var(--charcoal); color:var(--gold); }
+  .nav-btn:disabled { opacity:0.3; cursor:default; pointer-events:none; }
+  .week-counter {
+    font-family:'Cormorant Garamond',serif;
+    font-size:1rem; color:var(--muted);
+  }
+  .week-content { animation:fadeIn 0.35s ease; }
+  @keyframes fadeIn {
+    from{opacity:0;transform:translateY(8px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+  .toast {
+    position:fixed; bottom:2rem; left:50%;
+    transform:translateX(-50%) translateY(100px);
+    background:var(--charcoal); color:var(--gold);
+    font-family:'DM Mono',monospace;
+    font-size:0.7rem; letter-spacing:0.08em; text-transform:uppercase;
+    padding:0.75rem 1.5rem; border-radius:99px;
+    transition:transform 0.3s ease; z-index:200;
+  }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo-block">
+      <span class="logo-name">Dr. Gibran Chedid</span>
+      <span class="logo-handle">@drgibranchedid &middot; Planejamento Editorial</span>
+    </div>
+    <div class="progress-wrap">
+      <span class="progress-label">Progresso</span>
+      <div class="progress-bar-outer">
+        <div class="progress-bar-inner" id="progressBar" style="width:8%"></div>
+      </div>
+      <span class="progress-label" id="progressText">Sem. 1/12</span>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--edu)"></div> Educação</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--result)"></div> Resultados</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--auth)"></div> Autoridade</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--human)"></div> Bastidores</div>
+  </div>
+  <div class="week-selector" id="weekSelector"></div>
+  <div id="weekContent"></div>
+  <div class="nav-row">
+    <button class="nav-btn" id="prevBtn" onclick="changeWeek(-1)">← Anterior</button>
+    <span class="week-counter" id="weekCounter">Semana 1 de 12</span>
+    <button class="nav-btn" id="nextBtn" onclick="changeWeek(1)">Próxima →</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var WEEKS = [
+  { num:1, posts:[
+    { dia:"Segunda-feira", pilar:"edu", pilarLabel:"Educação", tema:"Mito ou Verdade: Facelift deixa o rosto esticado?", formato:"Stories", cta:"Qual outro mito você gostaria que eu desvendasse? Deixe nos comentários!" },
+    { dia:"Quarta-feira",  pilar:"result", pilarLabel:"Resultados", tema:"Caso de Sucesso: Facelift — 4 semanas pós-op.", formato:"Stories", cta:"Se você busca uma transformação natural e duradoura, agende sua consulta através do link na bio." },
+    { dia:"Sexta-feira",   pilar:"auth", pilarLabel:"Autoridade", tema:"Dica do Especialista: Cuidados pré-operatórios essenciais", formato:"Stories", cta:"Gostou da dica? Salve este post para consultar depois e compartilhe com quem precisa!" }
+  ]},
+  { num:2, posts:[
+    { dia:"Segunda-feira", pilar:"edu", pilarLabel:"Educação", tema:"Perguntas Frequentes: Qual a idade ideal para um Facelift?", formato:"Stories", cta:"Tem mais dúvidas? Envie sua pergunta por DM!" },
+    { dia:"Quarta-feira",  pilar:"result", pilarLabel:"Resultados", tema:"Depoimento de Paciente: Experiência com o Dr. Gibran", formato:"Stories", cta:"Sua história pode inspirar! Compartilhe sua experiência nos comentários." },
+    { dia:"Sexta-feira",   pilar:"human", pilarLabel:"Bastidores", tema:"Um dia na clínica: Preparação para cirurgias", formato:"Stories", cta:"Conheça mais sobre nosso trabalho nos Stories!" }
+  ]},
+  { num:3, posts:[
+    { dia:"Segunda-feira", pilar:"edu", pilarLabel:"Educação", tema:"Mito ou Verdade: A recuperação do Facelift é muito dolorosa?", formato:"Stories", cta:"Compartilhe sua experiência de recuperação nos comentários!" },
+    { dia:"Quarta-feira",  pilar:"result", pilarLabel:"Resultados", tema:"Caso de Sucesso: Facelift — 3 meses pós-op.", formato:"Stories", cta:"Pronto para sua transformação? Clique no link da bio para agendar." },
+    { dia:"Sexta-feira",   pilar:"auth", pilarLabel:"Autoridade", tema:"Dica do Especialista: Importância da consulta inicial", formato:"Stories", cta:"Agende sua consulta para um plano personalizado! Link na bio." }
+  ]},
+  { num:4, posts:[
+    { dia:"Segunda-feira", pilar:"edu", pilarLabel:"Educação", tema:"Perguntas Frequentes: Quanto tempo dura o resultado do Facelift?", formato:"Stories", cta:"Qual sua maior preocupação sobre a durabilidade?" },
+    { dia:"Quarta-feira",  pilar:"result", pilarLabel:"Resultados", tema:"Antes e Depois: Foco na região do pescoço", formato:"Stories", cta:"Descubra como podemos rejuvenescer seu pescoço. Link na bio." },
+    { dia:"Sexta-feira",   pilar:"human", pilarLabel:"Bastidores", tema:"Meet the Team: Apresentando um membro da equipe", formato:"Stories", cta:"Conheça mais sobre quem cuida de você em nossos Stories!" }
+  ]},
+  { num:5, posts:[
+    { dia:"Segunda-feira", pilar:"edu", pilarLabel:"Educação", tema:"Mito ou Verdade: Facelift é só para pessoas mais velhas?", formato:"Stories", cta:"Qual sua opinião sobre isso? Comente abaixo!" },
+    { dia:"Quarta-feira",  pilar:"result", pilarLabel:"Resultados", tema:"Caso de Sucesso: Midface Lift — 2 meses pós-op.", formato:"Stories", cta:"Rejuvenesça seu terço médio da face. Saiba mais no link da bio." },
+    { dia:"Sexta-feira",   pilar:"auth", pilarLabel:"Autoridade", tema:"Dica do Especialista: Alimentação e recuperação pós-cirúrgica", formato:"Stories", cta:"Salva essa dica para uma recuperação mais tranquila!" }
+  ]},
+  { num:6, posts:[
+    { dia:"Segunda-feira", pilar:"edu", pilarLabel:"Educação", tema:"Perguntas Frequentes: Quais os tipos de Facelift?", formato:"Stories", cta:"Qual tipo de Facelift te interessa mais?" },
+    { dia:"Quarta-feira",  pilar:"result", pilarLabel:"Resultados", tema:"Depoimento de Paciente: Satisfação com o resultado", formato:"Stories", cta:"Sua felicidade é nossa prioridade. Agende sua consulta." },
+    { dia:"Sexta-feira",   pilar:"human", pilarLabel:"Bastidores", tema:"Tecnologia na Cirurgia: Equipamentos da clínica", formato:"Stories", cta:"Conheça a tecnologia que usamos para sua segurança!" }
+  ]},
+  { num:7, posts:[
+    { dia:"Segunda-feira", pilar:"edu", pilarLabel:"Educação", tema:"Mito ou Verdade: Cirurgia plástica é vaidade?", formato:"Stories", cta:"Qual sua percepção sobre a cirurgia plástica?" },
+    { dia:"Quarta-feira",  pilar:"result", pilarLabel:"Resultados", tema:"Caso de Sucesso: Endoscopic Lift — 1 mês pós-op.", formato:"Stories", cta:"Descubra o poder do Endoscopic Lift. Link na bio." },
+    { dia:"Sexta-feira",   pilar:"auth", pilarLabel:"Autoridade", tema:"Dica do Especialista: Importância do pós-operatório", formato:"Stories", cta:"Cuidados pós-operatórios são cruciais! Salve este post." }
+  ]},
+  { num:8, posts:[
+    { dia:"Segunda-feira", pilar:"edu", pilarLabel:"Educação", tema:"Perguntas Frequentes: Como escolher um bom cirurgião plástico?", formato:"Stories", cta:"O que você considera mais importante na escolha?" },
+    { dia:"Quarta-feira",  pilar:"result", pilarLabel:"Resultados", tema:"Antes e Depois: Blefaroplastia combinada — foco no olhar", formato:"Stories", cta:"Rejuvenesça seu olhar. Agende sua avaliação." },
+    { dia:"Sexta-feira",   pilar:"human", pilarLabel:"Bastidores", tema:"Dia de Consulta: Como funciona o atendimento", formato:"Stories", cta:"Agende sua consulta e tire todas as suas dúvidas!" }
+  ]},
+  { num:9, posts:[
+    { dia:"Segunda-feira", pilar:"edu", pilarLabel:"Educação", tema:"Mito ou Verdade: Facelift é só para mulheres?", formato:"Stories", cta:"Homens também buscam rejuvenescimento!" },
+    { dia:"Quarta-feira",  pilar:"result", pilarLabel:"Resultados", tema:"Caso de Sucesso: Facelift em paciente masculino", formato:"Stories", cta:"Resultados naturais para todos. Saiba mais no link da bio." },
+    { dia:"Sexta-feira",   pilar:"auth", pilarLabel:"Autoridade", tema:"Dica do Especialista: Proteção solar pós-cirurgia", formato:"Stories", cta:"Proteja sua pele e seus resultados! Salve a dica." }
+  ]},
+  { num:10, posts:[
+    { dia:"Segunda-feira", pilar:"edu", pilarLabel:"Educação", tema:"Perguntas Frequentes: O que é o Multi-layered Deep Plane?", formato:"Stories", cta:"Entenda a técnica que garante resultados superiores." },
+    { dia:"Quarta-feira",  pilar:"result", pilarLabel:"Resultados", tema:"Depoimento de Paciente: Recuperação e resultados", formato:"Stories", cta:"Sua jornada de transformação começa aqui. Agende sua consulta." },
+    { dia:"Sexta-feira",   pilar:"human", pilarLabel:"Bastidores", tema:"Participação em Congresso: Destaques do evento", formato:"Stories", cta:"Fique por dentro das novidades da cirurgia plástica!" }
+  ]},
+  { num:11, posts:[
+    { dia:"Segunda-feira", pilar:"edu", pilarLabel:"Educação", tema:"Mito ou Verdade: Cicatrizes do Facelift são muito visíveis?", formato:"Stories", cta:"Desvende os segredos de cicatrizes discretas." },
+    { dia:"Quarta-feira",  pilar:"result", pilarLabel:"Resultados", tema:"Caso de Sucesso: Facelift com foco em naturalidade", formato:"Stories", cta:"A beleza da naturalidade. Agende sua avaliação." },
+    { dia:"Sexta-feira",   pilar:"auth", pilarLabel:"Autoridade", tema:"Dica do Especialista: Skincare para longevidade dos resultados", formato:"Stories", cta:"Invista na sua pele para resultados duradouros!" }
+  ]},
+  { num:12, posts:[
+    { dia:"Segunda-feira", pilar:"edu", pilarLabel:"Educação", tema:"Perguntas Frequentes: Qual a diferença entre Facelift e minilifting?", formato:"Stories", cta:"Entenda qual procedimento é ideal para você." },
+    { dia:"Quarta-feira",  pilar:"result", pilarLabel:"Resultados", tema:"Antes e Depois: Transformação completa da face", formato:"Stories", cta:"Sua melhor versão te espera. Clique no link da bio." },
+    { dia:"Sexta-feira",   pilar:"human", pilarLabel:"Bastidores", tema:"Agradecimento à Equipe e Pacientes", formato:"Stories", cta:"Sua confiança nos impulsiona!" }
+  ]}
+];
+
+var STORIES_DIARIOS = [
+  { dia:"Seg", icon:"📊", tipo:"Enquete" },
+  { dia:"Ter", icon:"❓", tipo:"Q&A" },
+  { dia:"Qua", icon:"📹", tipo:"Bastidores" },
+  { dia:"Qui", icon:"💡", tipo:"Dica Rápida" },
+  { dia:"Sex", icon:"🌟", tipo:"Destaques" },
+  { dia:"Sáb", icon:"🎙️", tipo:"Interação" },
+  { dia:"Dom", icon:"📖", tipo:"Reflexão" }
+];
+
+var PILAR_ICONS = { edu:"🎓", result:"✨", auth:"🏆", human:"👁️" };
+
+var currentWeek = 0;
+var expandedCards = {};
+
+function buildWeekSelector() {
+  var sel = document.getElementById('weekSelector');
+  WEEKS.forEach(function(w, i) {
+    var btn = document.createElement('button');
+    btn.className = 'week-btn' + (i === 0 ? ' active' : '');
+    btn.textContent = 'S' + w.num;
+    btn.setAttribute('data-idx', i);
+    btn.onclick = function() { goToWeek(i); };
+    sel.appendChild(btn);
+  });
+}
+
+function goToWeek(idx) {
+  currentWeek = idx;
+  expandedCards = {};
+  render();
+}
+
+function changeWeek(delta) {
+  var next = currentWeek + delta;
+  if (next < 0 || next >= WEEKS.length) return;
+  goToWeek(next);
+}
+
+function toggleCard(idx) {
+  expandedCards[idx] = !expandedCards[idx];
+  var card = document.querySelector('.post-card[data-idx="' + idx + '"]');
+  if (!card) return;
+  card.classList.toggle('expanded', !!expandedCards[idx]);
+  var lbl = card.querySelector('.toggle-label');
+  if (lbl) lbl.textContent = expandedCards[idx] ? 'Ocultar CTA' : 'Ver CTA';
+}
+
+function copyCard(idx) {
+  var week = WEEKS[currentWeek];
+  var post = week.posts[idx];
+  navigator.clipboard.writeText(post.cta).then(function() {
+    showToast('CTA copiado!');
+  }).catch(function() {
+    showToast('Selecione e copie manualmente');
+  });
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2000);
+}
+
+function render() {
+  var week = WEEKS[currentWeek];
+
+  document.querySelectorAll('.week-btn').forEach(function(btn, i) {
+    btn.classList.toggle('active', i === currentWeek);
+  });
+
+  var pct = Math.round(((currentWeek + 1) / WEEKS.length) * 100);
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = 'Sem. ' + (currentWeek + 1) + '/12';
+  document.getElementById('weekCounter').textContent = 'Semana ' + week.num + ' de 12';
+  document.getElementById('prevBtn').disabled = currentWeek === 0;
+  document.getElementById('nextBtn').disabled = currentWeek === WEEKS.length - 1;
+
+  var postsHTML = week.posts.map(function(p, i) {
+    var expanded = !!expandedCards[i];
+    return '<div class="post-card' + (expanded ? ' expanded' : '') + '" data-idx="' + i + '" onclick="toggleCard(' + i + ')">' +
+      '<div class="card-day-bar">' +
+        '<span class="card-day">' + p.dia + '</span>' +
+        '<span class="pilar-badge pilar-' + p.pilar + '">' + PILAR_ICONS[p.pilar] + ' ' + p.pilarLabel + '</span>' +
+      '</div>' +
+      '<div class="card-body">' +
+        '<div class="card-tema">' + p.tema + '</div>' +
+        '<div class="card-formato"><span>📱</span><span class="formato-label">&nbsp;' + p.formato + '</span></div>' +
+        '<div class="card-cta-block">' +
+          '<div class="cta-label">💬 CTA sugerido</div>' +
+          '<div class="cta-text">' + p.cta + '</div>' +
+          '<button class="copy-btn" onclick="event.stopPropagation(); copyCard(' + i + ')">Copiar texto</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="card-toggle">' +
+        '<span class="toggle-label">' + (expanded ? 'Ocultar CTA' : 'Ver CTA') + '</span>' +
+        ' <span class="toggle-arrow">▼</span>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  var storiesHTML = STORIES_DIARIOS.map(function(s) {
+    return '<div class="story-pill">' +
+      '<div class="story-dia">' + s.dia + '</div>' +
+      '<span class="story-icon">' + s.icon + '</span>' +
+      '<div class="story-tipo">' + s.tipo + '</div>' +
+    '</div>';
+  }).join('');
+
+  document.getElementById('weekContent').innerHTML =
+    '<div class="week-content">' +
+      '<div class="week-header">' +
+        '<div class="week-title">Semana <span>' + week.num + '</span></div>' +
+        '<div class="week-range">3 posts no feed &middot; stories diários</div>' +
+      '</div>' +
+      '<div class="posts-grid">' + postsHTML + '</div>' +
+      '<div class="stories-section">' +
+        '<div class="stories-heading">' +
+          '<div class="stories-heading-line"></div>' +
+          '<span class="stories-heading-text">📲 Stories diários sugeridos</span>' +
+          '<div class="stories-heading-line"></div>' +
+        '</div>' +
+        '<div class="stories-strip">' + storiesHTML + '</div>' +
+      '</div>' +
+    '</div>';
+}
+
+buildWeekSelector();
+render();
+</script>
+</body>
+</html>

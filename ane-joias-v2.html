@@ -265,6 +265,7 @@ tbody tr.clicavel:active td { background:var(--gold-glow); }
     color:var(--gray); font-size:11px; transition:transform .25s; border:1px solid var(--border2); border-radius:50%; }
   tbody tr.compacta.expandida .chevron { transform:rotate(180deg); color:var(--gold2); border-color:var(--gold-line); }
   tbody tr.compacta .td-detalhe { display:none; }
+  tbody tr.compacta:not(.expandida) .valor-total-extra { display:none; }
   tbody tr.compacta.expandida .td-detalhe { display:flex; }
   tbody tr.compacta .td-detalhe.td-desc { display:none; flex-direction:column; align-items:flex-start; text-align:left; }
   tbody tr.compacta.expandida .td-detalhe.td-desc { display:flex; }
@@ -482,7 +483,7 @@ tbody tr.clicavel:active td { background:var(--gold-glow); }
         <div class="panel">
           <div class="panel-head"><div class="panel-title">Próximos Vencimentos</div></div>
           <table>
-            <thead><tr><th>Cliente</th><th>Descrição</th><th>Valor</th><th>Vencimento</th><th>Status</th><th>WhatsApp</th></tr></thead>
+            <thead><tr><th>Cliente</th><th>Descrição</th><th>Parcela</th><th>Vencimento</th><th>Status</th><th>WhatsApp</th></tr></thead>
             <tbody id="tb-proximas"><tr><td colspan="6"><div class="empty-st"><div class="spin"></div></div></td></tr></tbody>
           </table>
         </div>
@@ -527,7 +528,7 @@ tbody tr.clicavel:active td { background:var(--gold-glow); }
         </div>
         <div class="panel">
           <table>
-            <thead><tr><th>Cliente</th><th>Descrição</th><th>Valor</th><th>Vencimento</th><th>Forma</th><th>Status</th><th>Ações</th></tr></thead>
+            <thead><tr><th>Cliente</th><th>Descrição</th><th>Parcela</th><th>Vencimento</th><th>Forma</th><th>Status</th><th>Ações</th></tr></thead>
             <tbody id="tb-cobrancas"><tr><td colspan="7"><div class="empty-st"><div class="spin"></div></div></td></tr></tbody>
           </table>
         </div>
@@ -641,7 +642,12 @@ tbody tr.clicavel:active td { background:var(--gold-glow); }
       </div>
       <div class="form-row">
         <div class="form-group"><label>Forma de Pagamento</label><select id="mcob-forma"><option value="">Não definido</option><option value="pix">PIX</option><option value="boleto">Boleto</option><option value="cartao">Cartão</option><option value="dinheiro">Dinheiro</option><option value="crediario">Crediário</option></select></div>
-        <div class="form-group"><label>Status</label><select id="mcob-status"><option value="pendente">Pendente</option><option value="pago">Pago</option><option value="atrasado">Atrasado</option><option value="cancelado">Cancelado</option></select></div>
+        <div class="form-group"><label>Status</label><select id="mcob-status" onchange="toggleDataPagamento()"><option value="pendente">Pendente</option><option value="pago">Pago</option><option value="atrasado">Atrasado</option><option value="cancelado">Cancelado</option></select></div>
+      </div>
+      <div class="form-group" id="wrap-pago-em" style="display:none">
+        <label>Data do Pagamento</label>
+        <input type="date" id="mcob-pago-em">
+        <small class="parcela-hint" style="margin-top:6px">Para compras retroativas, coloque a data em que o pagamento realmente aconteceu</small>
       </div>
       <div class="form-group"><label>Observações</label><textarea id="mcob-obs" rows="2" placeholder="Informações adicionais..."></textarea></div>
     </div>
@@ -965,7 +971,7 @@ function renderProximas() {
   tb.innerHTML = lista.map(c => `<tr class="clicavel compacta" onclick="handleRowTap(event,'cobranca','${c.id}')">
     <td class="td-title">${c.clientes?.nome||'—'}<span class="chevron">▾</span></td>
     <td class="td-detalhe td-desc" data-label="Descrição">${c.descricao}</td>
-    <td data-label="Valor"><strong>${brl(c.valor)}</strong></td>
+    <td data-label="Parcela"><strong>${brl(valorParcelaExibicao(c))}</strong>${c.parcelas > 1 ? `<span class="valor-total-extra"><br><small style="color:var(--gray);font-size:9px">total: ${brl(c.valor)}</small></span>` : ''}</td>
     <td data-label="Vencimento">${fmtD(c.vencimento)}</td>
     <td data-label="Status"><span class="badge badge-${c.status}">${c.status}</span></td>
     <td class="td-actions" onclick="event.stopPropagation()">${c.clientes?.whatsapp
@@ -983,7 +989,7 @@ function renderCobrancas() {
   tb.innerHTML = lista.map(c => `<tr class="clicavel compacta" onclick="handleRowTap(event,'cobranca','${c.id}')">
     <td class="td-title">${c.clientes?.nome||'—'}<span class="chevron">▾</span></td>
     <td class="td-detalhe td-desc" data-label="Descrição">${c.descricao}</td>
-    <td data-label="Valor"><strong>${brl(c.valor)}</strong>${c.status === 'pago' && c.valor_pago && Math.abs(c.valor_pago - (c.valor_parcela||c.valor)) > 0.01 ? `<br><small style="color:var(--gray);font-size:9px">pago: ${brl(c.valor_pago)}</small>` : ''}</td>
+    <td data-label="Parcela"><strong>${brl(valorParcelaExibicao(c))}</strong><span class="valor-total-extra">${c.parcelas > 1 ? `<br><small style="color:var(--gray);font-size:9px">total: ${brl(c.valor)}</small>` : ''}${c.status === 'pago' && c.valor_pago && Math.abs(c.valor_pago - (c.valor_parcela||c.valor)) > 0.01 ? `<br><small style="color:var(--gray);font-size:9px">pago: ${brl(c.valor_pago)}</small>` : ''}</span></td>
     <td data-label="Vencimento">${fmtD(c.vencimento)}</td>
     <td class="td-detalhe" data-label="Forma">${c.forma_pagamento||'—'}</td>
     <td data-label="Status"><span class="badge badge-${c.status}">${c.status}</span></td>
@@ -1050,6 +1056,8 @@ function editarCobranca(id) {
   if(p >= 4) { document.getElementById('mcob-venc4').value = c.vencimento_4||''; document.getElementById('mcob-valor-p4').value = c.valor_p4 || padrao || ''; }
   document.getElementById('mcob-forma').value = c.forma_pagamento||'';
   document.getElementById('mcob-status').value = c.status||'pendente';
+  document.getElementById('mcob-pago-em').value = c.pago_em ? c.pago_em.split('T')[0] : '';
+  toggleDataPagamento();
   document.getElementById('mcob-obs').value = c.observacoes||'';
   document.getElementById('mcob-title').textContent = 'Editar Cobrança';
   document.getElementById('modal-cobranca').classList.add('open');
@@ -1060,10 +1068,21 @@ function limparCobranca() {
   document.getElementById('mcob-cliente').value = '';
   document.getElementById('mcob-forma').value = '';
   document.getElementById('mcob-status').value = 'pendente';
+  document.getElementById('mcob-pago-em').value = '';
+  document.getElementById('wrap-pago-em').style.display = 'none';
   document.getElementById('mcob-parcelas').value = '1';
   document.getElementById('venc-parcela-2').style.display = 'none';
   document.getElementById('venc-parcela-3').style.display = 'none';
   document.getElementById('venc-parcela-4').style.display = 'none';
+}
+
+function toggleDataPagamento() {
+  const status = document.getElementById('mcob-status').value;
+  const wrap = document.getElementById('wrap-pago-em');
+  wrap.style.display = status === 'pago' ? '' : 'none';
+  if (status === 'pago' && !document.getElementById('mcob-pago-em').value) {
+    document.getElementById('mcob-pago-em').value = new Date().toISOString().split('T')[0];
+  }
 }
 
 function fecharModal(id) { document.getElementById(id).classList.remove('open'); }
@@ -1096,6 +1115,8 @@ async function salvarCobranca() {
     ? descricao + ' (' + parcelas + 'x' + (iguais ? ' de ' + brl(vp1) : ': ' + valoresParcelas.map(brl).join(' + ')) + ')'
     : descricao;
 
+  const pagoEm = status === 'pago' ? (document.getElementById('mcob-pago-em').value || new Date().toISOString().split('T')[0]) : null;
+
   const payload = {
     id: id || undefined,
     cliente_id, descricao: descFinal,
@@ -1108,6 +1129,7 @@ async function salvarCobranca() {
     vencimento_3: venc3,
     vencimento_4: venc4,
     forma_pagamento: forma, status, observacoes: obs,
+    pago_em: pagoEm,
   };
 
   try {
@@ -1234,6 +1256,7 @@ function renderFaturas(fats) {
 
 /* ---- utils ---- */
 function brl(v) { return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits:2 }); }
+function valorParcelaExibicao(c) { return c.valor_parcela || (c.valor / (c.parcelas||1)); }
 function fmtD(d) { if (!d) return '—'; const [y,m,day] = d.split('-'); return `${day}/${m}/${y}`; }
 function esc(s) { return (s||'').replace(/'/g,"\\'"); }
 function vazio(txt, cols) { return `<tr><td class="td-empty" colspan="${cols}"><div class="empty-st"><div class="empty-ic">◈</div>${txt}</div></td></tr>`; }

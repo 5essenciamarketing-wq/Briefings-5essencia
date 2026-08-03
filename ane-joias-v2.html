@@ -222,6 +222,9 @@ th { font-size:7px; letter-spacing:2.5px; text-transform:uppercase; color:var(--
 td { padding:14px 22px; font-size:12.5px; font-weight:400; border-bottom:1px solid rgba(42,34,24,0.5); color:var(--off); vertical-align:middle; }
 tr:last-child td { border-bottom:none; }
 tr:hover td { background:var(--gold-glow); }
+tbody tr.clicavel { cursor:pointer; }
+tbody tr.clicavel:hover td { background:var(--gold-dim); }
+tbody tr.clicavel:active td { background:var(--gold-glow); }
 .actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 .empty-st { text-align:center; padding:52px 20px; color:var(--gray); font-size:10px; letter-spacing:2px; text-transform:uppercase; }
 .empty-ic { font-size:26px; opacity:0.15; margin-bottom:12px; }
@@ -777,13 +780,13 @@ function renderClientes(q = '') {
   let lista = clientes;
   if (q) lista = lista.filter(c => c.nome.toLowerCase().includes(q) || (c.email||'').toLowerCase().includes(q));
   if (!lista.length) { tb.innerHTML = vazio('Nenhuma cliente cadastrada', 6); return; }
-  tb.innerHTML = lista.map(c => `<tr>
+  tb.innerHTML = lista.map(c => `<tr class="clicavel" onclick="editarCliente('${c.id}')">
     <td class="td-title">${c.nome}</td>
     <td data-label="WhatsApp">${c.whatsapp||'—'}</td>
     <td data-label="E-mail">${c.email||'—'}</td>
     <td data-label="CPF/CNPJ">${c.cpf_cnpj||'—'}</td>
     <td data-label="Status"><span class="badge badge-${c.status}">${c.status}</span></td>
-    <td class="td-actions"><div class="actions">
+    <td class="td-actions"><div class="actions" onclick="event.stopPropagation()">
       <button class="btn btn-ghost btn-sm" onclick="editarCliente('${c.id}')">Editar</button>
       <button class="btn btn-danger btn-sm" onclick="excluirCliente('${c.id}')">Excluir</button>
     </div></td>
@@ -915,13 +918,13 @@ function renderProximas() {
     return diff <= 7;
   }).slice(0, 12);
   if (!lista.length) { tb.innerHTML = vazio('Nenhum vencimento próximo', 6); return; }
-  tb.innerHTML = lista.map(c => `<tr>
+  tb.innerHTML = lista.map(c => `<tr class="clicavel" onclick="editarCobranca('${c.id}')">
     <td class="td-title">${c.clientes?.nome||'—'}</td>
     <td data-label="Descrição">${c.descricao}</td>
     <td data-label="Valor"><strong>${brl(c.valor)}</strong></td>
     <td data-label="Vencimento">${fmtD(c.vencimento)}</td>
     <td data-label="Status"><span class="badge badge-${c.status}">${c.status}</span></td>
-    <td class="td-actions">${c.clientes?.whatsapp
+    <td class="td-actions" onclick="event.stopPropagation()">${c.clientes?.whatsapp
       ? `<button class="btn btn-wpp btn-sm" onclick="enviarWpp('${c.clientes.whatsapp}','${esc(c.clientes.nome)}','${esc(c.descricao)}','${c.valor}','${c.vencimento}')">✉ Enviar</button>`
       : '<span style="color:var(--gray);font-size:9px">Sem WPP</span>'}
     </td>
@@ -933,14 +936,14 @@ function renderCobrancas() {
   let lista = filtroStatus === 'todas' ? cobrancas : cobrancas.filter(c => c.status === filtroStatus);
   if (filtroMes) lista = lista.filter(c => (c.vencimento||'').slice(0,7) === filtroMes);
   if (!lista.length) { tb.innerHTML = vazio(filtroMes ? 'Nenhuma cobrança vence nesse mês' : 'Nenhuma cobrança encontrada', 7); return; }
-  tb.innerHTML = lista.map(c => `<tr>
+  tb.innerHTML = lista.map(c => `<tr class="clicavel" onclick="editarCobranca('${c.id}')">
     <td class="td-title">${c.clientes?.nome||'—'}</td>
     <td data-label="Descrição">${c.descricao}</td>
     <td data-label="Valor"><strong>${brl(c.valor)}</strong>${c.status === 'pago' && c.valor_pago && Math.abs(c.valor_pago - (c.valor_parcela||c.valor)) > 0.01 ? `<br><small style="color:var(--gray);font-size:9px">pago: ${brl(c.valor_pago)}</small>` : ''}</td>
     <td data-label="Vencimento">${fmtD(c.vencimento)}</td>
     <td data-label="Forma">${c.forma_pagamento||'—'}</td>
     <td data-label="Status"><span class="badge badge-${c.status}">${c.status}</span></td>
-    <td class="td-actions"><div class="actions">
+    <td class="td-actions"><div class="actions" onclick="event.stopPropagation()">
       ${c.status !== 'pago' ? `<button class="btn btn-pago btn-sm" onclick="abrirModalPagamento('${c.id}')">✓ Pago</button>` : ''}
       <button class="btn btn-ghost btn-sm" onclick="editarCobranca('${c.id}')">Editar</button>
       <button class="btn btn-danger btn-sm" onclick="excluirCobranca('${c.id}')">Excluir</button>

@@ -203,6 +203,13 @@ select option { background:var(--surface); }
 .search-bar { margin-bottom:16px; }
 .search-bar input { max-width:340px; border-radius:999px; padding:11px 18px; font-size:13px; }
 
+.mes-filtro { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
+.mes-filtro input[type="month"] { width:auto; max-width:170px; padding:10px 14px; border-radius:999px; font-size:12px; }
+.chip { padding:9px 16px; border-radius:999px; border:1px solid var(--border2); background:var(--surface2); color:var(--gray);
+  font-size:9px; letter-spacing:1.5px; text-transform:uppercase; font-weight:600; cursor:pointer; white-space:nowrap; transition:all .2s; }
+.chip:hover { border-color:var(--gold-line); color:var(--gold2); }
+.chip-x { color:var(--coral); border-color:rgba(226,104,90,0.25); }
+
 .tabs { display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:20px; overflow-x:auto; }
 .tabs::-webkit-scrollbar { display:none; }
 .tab { padding:12px 18px; font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--gray); cursor:pointer;
@@ -476,6 +483,12 @@ tr:hover td { background:var(--gold-glow); }
         <button class="btn" onclick="abrirModalCobranca()">+ Nova Cobrança</button>
       </div>
       <div class="content">
+        <div class="mes-filtro">
+          <input type="month" id="filtro-mes" onchange="aplicarFiltroMes()">
+          <button class="chip" onclick="irParaMes(0)">Este mês</button>
+          <button class="chip" onclick="irParaMes(1)">Mês que vem</button>
+          <button class="chip chip-x" id="chip-limpar-mes" onclick="limparFiltroMes()" style="display:none">Limpar ×</button>
+        </div>
         <div class="tabs">
           <div class="tab active" onclick="filtrarCob('todas',this)">Todas</div>
           <div class="tab" onclick="filtrarCob('pendente',this)">Pendentes</div>
@@ -660,7 +673,7 @@ async function apiCall(action, extra = {}) {
   return res.json();
 }
 
-let clientes = [], cobrancas = [], filtroStatus = 'todas';
+let clientes = [], cobrancas = [], filtroStatus = 'todas', filtroMes = '';
 let sessaoAtual = null;
 let secaoAtual = 'dashboard';
 
@@ -918,7 +931,8 @@ function renderProximas() {
 function renderCobrancas() {
   const tb = document.getElementById('tb-cobrancas');
   let lista = filtroStatus === 'todas' ? cobrancas : cobrancas.filter(c => c.status === filtroStatus);
-  if (!lista.length) { tb.innerHTML = vazio('Nenhuma cobrança encontrada', 7); return; }
+  if (filtroMes) lista = lista.filter(c => (c.vencimento||'').slice(0,7) === filtroMes);
+  if (!lista.length) { tb.innerHTML = vazio(filtroMes ? 'Nenhuma cobrança vence nesse mês' : 'Nenhuma cobrança encontrada', 7); return; }
   tb.innerHTML = lista.map(c => `<tr>
     <td class="td-title">${c.clientes?.nome||'—'}</td>
     <td data-label="Descrição">${c.descricao}</td>
@@ -938,6 +952,28 @@ function filtrarCob(s, el) {
   filtroStatus = s;
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
+  renderCobrancas();
+}
+
+function aplicarFiltroMes() {
+  filtroMes = document.getElementById('filtro-mes').value; // formato YYYY-MM
+  document.getElementById('chip-limpar-mes').style.display = filtroMes ? '' : 'none';
+  renderCobrancas();
+}
+
+function irParaMes(offset) {
+  const d = new Date();
+  d.setDate(1);
+  d.setMonth(d.getMonth() + offset);
+  const ym = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+  document.getElementById('filtro-mes').value = ym;
+  aplicarFiltroMes();
+}
+
+function limparFiltroMes() {
+  filtroMes = '';
+  document.getElementById('filtro-mes').value = '';
+  document.getElementById('chip-limpar-mes').style.display = 'none';
   renderCobrancas();
 }
 

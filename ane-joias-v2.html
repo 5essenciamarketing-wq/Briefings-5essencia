@@ -285,6 +285,11 @@ tbody tr.clicavel:active td { background:var(--gold-glow); }
 .modal-foot { padding:16px 28px calc(24px + env(safe-area-inset-bottom, 0px)); display:flex; gap:12px; justify-content:flex-end; position:sticky; bottom:0; background:var(--surface); }
 .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 .parcela-hint { display:block; color:var(--gray); font-size:9px; letter-spacing:0.3px; margin:-8px 0 14px; }
+.parcelas-mini { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.mini-chip { font-size:9px; letter-spacing:0.5px; padding:4px 9px; border-radius:999px; border:1px solid var(--border2); color:var(--gray); }
+.mini-chip.mini-pago { color:var(--sage); border-color:rgba(143,191,154,0.3); background:var(--sage-dim); }
+.mini-chip.mini-atrasado { color:var(--coral); border-color:rgba(226,104,90,0.3); background:var(--coral-dim); }
+.mini-chip.mini-pendente { color:var(--gold2); border-color:var(--gold-line); background:var(--gold-dim); }
 .combo-wrap { position:relative; }
 .combo-lista { position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--surface2); border:1px solid var(--gold-line);
   border-radius:var(--r-sm); max-height:220px; overflow-y:auto; z-index:20; display:none; box-shadow:0 16px 40px -12px rgba(0,0,0,0.6); }
@@ -667,13 +672,14 @@ tbody tr.clicavel:active td { background:var(--gold-glow); }
     </div>
     <div class="modal-body">
       <input type="hidden" id="mpag-id">
-      <div class="form-group"><label>Cliente</label><input type="text" id="mpag-cliente" readonly style="opacity:0.6;cursor:default"></div>
+      <input type="hidden" id="mpag-numero">
+      <div class="form-group"><label>Cliente / Parcela</label><input type="text" id="mpag-cliente" readonly style="opacity:0.6;cursor:default"></div>
       <div class="form-row">
         <div class="form-group"><label>Valor da Parcela</label><input type="text" id="mpag-valor-devido" readonly style="opacity:0.6;cursor:default"></div>
         <div class="form-group"><label>Valor Pago (R$) *</label><input type="number" id="mpag-valor-pago" step="0.01" min="0" inputmode="decimal" oninput="atualizarDiferencaPagamento()"></div>
       </div>
       <div id="mpag-diferenca" style="font-size:11px;color:var(--gray);margin-top:-6px;margin-bottom:16px;letter-spacing:0.3px"></div>
-      <div class="form-group"><label>Observação (opcional)</label><input type="text" id="mpag-obs" placeholder="Ex: pagou parte no cartão, parte em dinheiro"></div>
+      <div class="form-group"><label>Data do Pagamento</label><input type="date" id="mpag-data"><small class="parcela-hint" style="margin-top:6px">Se for um pagamento retroativo, coloque a data real</small></div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="fecharModal('modal-pagamento')">Cancelar</button>
@@ -934,17 +940,60 @@ async function loadCobrancas() {
   try {
     const r = await apiCall('listCobrancas');
     if (!r.ok) { toast_erroApi('Erro ao carregar cobranças', r); return; }
-    cobrancas = r.data || [];
+    cobrancas = (r.data || []).map(processarCobranca);
     renderCobrancas();
     renderProximas();
   } catch (e) { toast('Erro ao carregar cobranças: ' + e.message, true); }
 }
 
+/* Calcula, a partir das parcelas individuais, qual é a próxima parcela em aberto
+   e se a cobrança está pendente, atrasada ou totalmente paga — sem depender só
+   do status manual. Isso resolve o caso de cadastro retroativo: se a 1ª parcela
+   já venceu e não foi marcada como paga, ela aparece atrasada automaticamente,
+   e as parcelas futuras continuam pendentes até serem marcadas uma a uma. */
+function processarCobranca(c) {
+  const n = c.parcelas || 1;
+  const vencs = [c.vencimento, c.vencimento_2, c.vencimento_3, c.vencimento_4];
+  const vals = [c.valor_p1, c.valor_p2, c.valor_p3, c.valor_p4];
+  const pagos = [c.pago_p1, c.pago_p2, c.pago_p3, c.pago_p4];
+  const padrao = c.valor / n;
+  const parcelas = [];
+  for (let i = 0; i < n; i++) {
+    parcelas.push({
+      numero: i + 1,
+      vencimento: vencs[i],
+      valor: (vals[i] !== undefined && vals[i] !== null && vals[i] !== '') ? +vals[i] : padrao,
+      pago: pagos[i] !== undefined && pagos[i] !== null && pagos[i] !== '',
+      valorPago: pagos[i] || null
+    });
+  }
+  c.parcelasInfo = parcelas;
+  c.proximaParcela = parcelas.find(p => !p.pago) || null;
+
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  if (c.status === 'cancelado') c.statusEfetivo = 'cancelado';
+  else if (!c.proximaParcela) c.statusEfetivo = 'pago';
+  else if (new Date(c.proximaParcela.vencimento + 'T00:00:00') < hoje) c.statusEfetivo = 'atrasado';
+  else c.statusEfetivo = 'pendente';
+
+  c.vencimentoRelevante = c.proximaParcela ? c.proximaParcela.vencimento : c.vencimento;
+  c.valorRelevante = c.proximaParcela ? c.proximaParcela.valor : (c.valor_parcela || padrao);
+  return c;
+}
+
 function atualizarStats() {
   document.getElementById('st-clientes').textContent = clientes.filter(c => c.status === 'ativo').length;
-  const rec = cobrancas.filter(c => c.status === 'pago').reduce((s,c) => s + +c.valor, 0);
-  const pen = cobrancas.filter(c => c.status === 'pendente').reduce((s,c) => s + +c.valor, 0);
-  const atr = cobrancas.filter(c => c.status === 'atrasado').reduce((s,c) => s + +c.valor, 0);
+
+  let rec = 0, pen = 0, atr = 0;
+  cobrancas.forEach(c => {
+    if (c.statusEfetivo === 'cancelado') return;
+    (c.parcelasInfo || []).forEach(p => {
+      if (p.pago) { rec += +p.valorPago; return; }
+      const estaAtrasada = c.statusEfetivo === 'atrasado' && c.proximaParcela && p.numero === c.proximaParcela.numero;
+      if (estaAtrasada) atr += p.valor; else pen += p.valor;
+    });
+  });
+
   document.getElementById('st-recebido').textContent = brl(rec);
   document.getElementById('st-pendente').textContent = brl(pen);
   document.getElementById('st-atrasado').textContent = brl(atr);
@@ -963,19 +1012,19 @@ function renderProximas() {
   const tb = document.getElementById('tb-proximas');
   const hoje = new Date(); hoje.setHours(0,0,0,0);
   const lista = cobrancas.filter(c => {
-    if (['pago','cancelado'].includes(c.status)) return false;
-    const diff = (new Date(c.vencimento + 'T00:00:00') - hoje) / 86400000;
+    if (['pago','cancelado'].includes(c.statusEfetivo)) return false;
+    const diff = (new Date(c.vencimentoRelevante + 'T00:00:00') - hoje) / 86400000;
     return diff <= 7;
-  }).slice(0, 12);
+  }).sort((a,b) => (a.vencimentoRelevante||'').localeCompare(b.vencimentoRelevante||'')).slice(0, 12);
   if (!lista.length) { tb.innerHTML = vazio('Nenhum vencimento próximo', 6); return; }
   tb.innerHTML = lista.map(c => `<tr class="clicavel compacta" onclick="handleRowTap(event,'cobranca','${c.id}')">
-    <td class="td-title">${c.clientes?.nome||'—'}<span class="chevron">▾</span></td>
+    <td class="td-title">${c.clientes?.nome||'—'}${c.parcelas>1 ? ` <small style="color:var(--gray);font-weight:400">(${c.proximaParcela.numero}/${c.parcelas})</small>`:''}<span class="chevron">▾</span></td>
     <td class="td-detalhe td-desc" data-label="Descrição">${c.descricao}</td>
-    <td data-label="Parcela"><strong>${brl(valorParcelaExibicao(c))}</strong>${c.parcelas > 1 ? `<span class="valor-total-extra"><br><small style="color:var(--gray);font-size:9px">total: ${brl(c.valor)}</small></span>` : ''}</td>
-    <td data-label="Vencimento">${fmtD(c.vencimento)}</td>
-    <td data-label="Status"><span class="badge badge-${c.status}">${c.status}</span></td>
+    <td data-label="Parcela"><strong>${brl(c.valorRelevante)}</strong>${c.parcelas > 1 ? `<span class="valor-total-extra"><br><small style="color:var(--gray);font-size:9px">total: ${brl(c.valor)}</small></span>` : ''}</td>
+    <td data-label="Vencimento">${fmtD(c.vencimentoRelevante)}</td>
+    <td data-label="Status"><span class="badge badge-${c.statusEfetivo}">${c.statusEfetivo}</span></td>
     <td class="td-actions" onclick="event.stopPropagation()">${c.clientes?.whatsapp
-      ? `<button class="btn btn-wpp btn-sm" onclick="enviarWpp('${c.clientes.whatsapp}','${esc(c.clientes.nome)}','${esc(c.descricao)}','${c.valor}','${c.vencimento}')">✉ Enviar</button>`
+      ? `<button class="btn btn-wpp btn-sm" onclick="enviarWpp('${c.clientes.whatsapp}','${esc(c.clientes.nome)}','${esc(c.descricao)}','${c.valorRelevante}','${c.vencimentoRelevante}')">✉ Enviar</button>`
       : '<span style="color:var(--gray);font-size:9px">Sem WPP</span>'}
     </td>
   </tr>`).join('');
@@ -983,18 +1032,18 @@ function renderProximas() {
 
 function renderCobrancas() {
   const tb = document.getElementById('tb-cobrancas');
-  let lista = filtroStatus === 'todas' ? cobrancas : cobrancas.filter(c => c.status === filtroStatus);
-  if (filtroMes) lista = lista.filter(c => (c.vencimento||'').slice(0,7) === filtroMes);
+  let lista = filtroStatus === 'todas' ? cobrancas : cobrancas.filter(c => c.statusEfetivo === filtroStatus);
+  if (filtroMes) lista = lista.filter(c => (c.vencimentoRelevante||'').slice(0,7) === filtroMes);
   if (!lista.length) { tb.innerHTML = vazio(filtroMes ? 'Nenhuma cobrança vence nesse mês' : 'Nenhuma cobrança encontrada', 7); return; }
   tb.innerHTML = lista.map(c => `<tr class="clicavel compacta" onclick="handleRowTap(event,'cobranca','${c.id}')">
-    <td class="td-title">${c.clientes?.nome||'—'}<span class="chevron">▾</span></td>
-    <td class="td-detalhe td-desc" data-label="Descrição">${c.descricao}</td>
-    <td data-label="Parcela"><strong>${brl(valorParcelaExibicao(c))}</strong><span class="valor-total-extra">${c.parcelas > 1 ? `<br><small style="color:var(--gray);font-size:9px">total: ${brl(c.valor)}</small>` : ''}${c.status === 'pago' && c.valor_pago && Math.abs(c.valor_pago - (c.valor_parcela||c.valor)) > 0.01 ? `<br><small style="color:var(--gray);font-size:9px">pago: ${brl(c.valor_pago)}</small>` : ''}</span></td>
-    <td data-label="Vencimento">${fmtD(c.vencimento)}</td>
+    <td class="td-title">${c.clientes?.nome||'—'}${c.parcelas>1 ? ` <small style="color:var(--gray);font-weight:400">(${c.proximaParcela?c.proximaParcela.numero:c.parcelas}/${c.parcelas})</small>`:''}<span class="chevron">▾</span></td>
+    <td class="td-detalhe td-desc" data-label="Descrição">${c.descricao}${c.parcelas > 1 ? `<div class="parcelas-mini">${c.parcelasInfo.map(p => `<span class="mini-chip mini-${p.pago?'pago':(p===c.proximaParcela&&c.statusEfetivo==='atrasado'?'atrasado':'pendente')}">${p.numero}ª: ${p.pago?'paga':(fmtD(p.vencimento))}</span>`).join('')}</div>`:''}</td>
+    <td data-label="Parcela"><strong>${brl(c.valorRelevante)}</strong><span class="valor-total-extra">${c.parcelas > 1 ? `<br><small style="color:var(--gray);font-size:9px">total: ${brl(c.valor)}</small>` : ''}</span></td>
+    <td data-label="Vencimento">${fmtD(c.vencimentoRelevante)}</td>
     <td class="td-detalhe" data-label="Forma">${c.forma_pagamento||'—'}</td>
-    <td data-label="Status"><span class="badge badge-${c.status}">${c.status}</span></td>
+    <td data-label="Status"><span class="badge badge-${c.statusEfetivo}">${c.statusEfetivo}</span></td>
     <td class="td-actions"><div class="actions" onclick="event.stopPropagation()">
-      ${c.status !== 'pago' ? `<button class="btn btn-pago btn-sm" onclick="abrirModalPagamento('${c.id}')">✓ Pago</button>` : ''}
+      ${c.statusEfetivo !== 'pago' && c.statusEfetivo !== 'cancelado' ? `<button class="btn btn-pago btn-sm" onclick="abrirModalPagamento('${c.id}')">✓ Pago</button>` : ''}
       <button class="btn btn-ghost btn-sm" onclick="editarCobranca('${c.id}')">Editar</button>
       <button class="btn btn-danger btn-sm" onclick="excluirCobranca('${c.id}')">Excluir</button>
     </div></td>
@@ -1055,7 +1104,7 @@ function editarCobranca(id) {
   if(p >= 3) { document.getElementById('mcob-venc3').value = c.vencimento_3||''; document.getElementById('mcob-valor-p3').value = c.valor_p3 || padrao || ''; }
   if(p >= 4) { document.getElementById('mcob-venc4').value = c.vencimento_4||''; document.getElementById('mcob-valor-p4').value = c.valor_p4 || padrao || ''; }
   document.getElementById('mcob-forma').value = c.forma_pagamento||'';
-  document.getElementById('mcob-status').value = c.status||'pendente';
+  document.getElementById('mcob-status').value = c.statusEfetivo || c.status || 'pendente';
   document.getElementById('mcob-pago-em').value = c.pago_em ? c.pago_em.split('T')[0] : '';
   toggleDataPagamento();
   document.getElementById('mcob-obs').value = c.observacoes||'';
@@ -1143,12 +1192,14 @@ async function salvarCobranca() {
 
 function abrirModalPagamento(id) {
   const c = cobrancas.find(x => x.id === id); if (!c) return;
-  const devido = c.valor_parcela || c.valor;
+  if (!c.proximaParcela) { toast('Todas as parcelas já estão pagas'); return; }
+  const p = c.proximaParcela;
   document.getElementById('mpag-id').value = c.id;
-  document.getElementById('mpag-cliente').value = c.clientes?.nome || '—';
-  document.getElementById('mpag-valor-devido').value = brl(devido);
-  document.getElementById('mpag-valor-pago').value = devido;
-  document.getElementById('mpag-obs').value = '';
+  document.getElementById('mpag-numero').value = p.numero;
+  document.getElementById('mpag-cliente').value = (c.clientes?.nome || '—') + (c.parcelas > 1 ? ` — Parcela ${p.numero}/${c.parcelas}` : '');
+  document.getElementById('mpag-valor-devido').value = brl(p.valor);
+  document.getElementById('mpag-valor-pago').value = p.valor;
+  document.getElementById('mpag-data').value = new Date().toISOString().split('T')[0];
   atualizarDiferencaPagamento();
   document.getElementById('modal-pagamento').classList.add('open');
 }
@@ -1165,13 +1216,14 @@ function atualizarDiferencaPagamento() {
 
 async function confirmarPagamento() {
   const id = document.getElementById('mpag-id').value;
+  const numero = document.getElementById('mpag-numero').value;
   const valorPago = parseFloat(document.getElementById('mpag-valor-pago').value);
+  const dataPagamento = document.getElementById('mpag-data').value || new Date().toISOString().split('T')[0];
   if (!valorPago && valorPago !== 0) { toast('Informe o valor pago', true); return; }
-  const obs = document.getElementById('mpag-obs').value.trim() || null;
   try {
-    const r = await apiCall('marcarPago', { id, valor_pago: valorPago, obs_pagamento: obs });
-    if (!r.ok) { toast('Erro ao registrar pagamento', true); return; }
-    toast('Pagamento registrado ✦');
+    const r = await apiCall('pagarParcela', { id, numero, valor_pago: valorPago, data_pagamento: dataPagamento });
+    if (!r.ok) { toast('Erro ao registrar pagamento: ' + (r.error||''), true); return; }
+    toast(r.todasPagas ? 'Última parcela paga — cobrança quitada ✦' : 'Parcela paga ✦');
     fecharModal('modal-pagamento');
     await loadCobrancas(); atualizarStats();
   } catch (e) { toast('Erro: ' + e.message, true); }

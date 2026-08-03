@@ -165,6 +165,8 @@ select option { background:var(--surface); }
 
 /* Mobile top bar (only visible <900px) */
 .mobile-topbar { display:none; }
+.admin-sec { display:none; }
+.admin-sec.active { display:block; }
 
 /* ============ DASHBOARD HERO / STATS ============ */
 .hero-row { display:flex; gap:20px; align-items:stretch; margin-bottom:28px; flex-wrap:wrap; }
@@ -249,6 +251,14 @@ tr:hover td { background:var(--gold-glow); }
 .modal-body { padding:22px 28px; }
 .modal-foot { padding:16px 28px 24px; display:flex; gap:12px; justify-content:flex-end; position:sticky; bottom:0; background:var(--surface); }
 .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.combo-wrap { position:relative; }
+.combo-lista { position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--surface2); border:1px solid var(--gold-line);
+  border-radius:var(--r-sm); max-height:220px; overflow-y:auto; z-index:20; display:none; box-shadow:0 16px 40px -12px rgba(0,0,0,0.6); }
+.combo-lista.open { display:block; }
+.combo-item { padding:11px 15px; font-size:13px; color:var(--off); cursor:pointer; border-bottom:1px solid var(--border); }
+.combo-item:last-child { border-bottom:none; }
+.combo-item:hover, .combo-item.hl { background:var(--gold-dim); color:var(--gold2); }
+.combo-vazio { padding:14px 15px; font-size:11px; color:var(--gray); letter-spacing:0.5px; }
 
 @media (max-width: 640px) {
   .modal-overlay { align-items:flex-end; }
@@ -546,7 +556,13 @@ tr:hover td { background:var(--gold-glow); }
     </div>
     <div class="modal-body">
       <input type="hidden" id="mcob-id">
-      <div class="form-group"><label>Cliente *</label><select id="mcob-cliente"><option value="">Selecione a cliente...</option></select></div>
+      <div class="form-group combo-wrap">
+        <label>Cliente *</label>
+        <input type="text" id="mcob-cliente-busca" placeholder="Digite o nome da cliente..." autocomplete="off"
+          oninput="filtrarClienteCombo()" onfocus="filtrarClienteCombo()" onblur="setTimeout(fecharClienteCombo,150)">
+        <input type="hidden" id="mcob-cliente">
+        <div id="mcob-cliente-lista" class="combo-lista"></div>
+      </div>
       <div class="form-group"><label>Descrição *</label><input type="text" id="mcob-desc" placeholder="Ex: Anel Solitário Ouro 18k"></div>
       <div class="form-row">
         <div class="form-group"><label>Valor Total (R$) *</label><input type="number" id="mcob-valor-total" placeholder="0,00" step="0.01" min="0" oninput="calcularParcelas()" inputmode="decimal"></div>
@@ -581,6 +597,30 @@ tr:hover td { background:var(--gold-glow); }
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="fecharModal('modal-cobranca')">Cancelar</button>
       <button class="btn" onclick="salvarCobranca()">Salvar Cobrança</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PAGAMENTO -->
+<div class="modal-overlay" id="modal-pagamento">
+  <div class="modal" style="width:420px">
+    <div class="modal-head">
+      <div class="modal-title">Registrar Pagamento</div>
+      <button class="modal-x" onclick="fecharModal('modal-pagamento')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="mpag-id">
+      <div class="form-group"><label>Cliente</label><input type="text" id="mpag-cliente" readonly style="opacity:0.6;cursor:default"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Valor da Parcela</label><input type="text" id="mpag-valor-devido" readonly style="opacity:0.6;cursor:default"></div>
+        <div class="form-group"><label>Valor Pago (R$) *</label><input type="number" id="mpag-valor-pago" step="0.01" min="0" inputmode="decimal" oninput="atualizarDiferencaPagamento()"></div>
+      </div>
+      <div id="mpag-diferenca" style="font-size:11px;color:var(--gray);margin-top:-6px;margin-bottom:16px;letter-spacing:0.3px"></div>
+      <div class="form-group"><label>Observação (opcional)</label><input type="text" id="mpag-obs" placeholder="Ex: pagou parte no cartão, parte em dinheiro"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-pagamento')">Cancelar</button>
+      <button class="btn btn-pago" onclick="confirmarPagamento()">Confirmar Pagamento</button>
     </div>
   </div>
 </div>
@@ -715,7 +755,6 @@ async function loadClientes() {
     if (!r.ok) { toast_erroApi('Erro ao carregar clientes', r); return; }
     clientes = (r.data || []).sort((a, b) => (b.criado_em || '').localeCompare(a.criado_em || ''));
     renderClientes();
-    popularSelect();
     atualizarStats();
   } catch (e) { toast('Erro ao carregar clientes: ' + e.message, true); }
 }
@@ -740,12 +779,27 @@ function renderClientes(q = '') {
 
 function filtrarClientes() { renderClientes(document.getElementById('busca-clientes').value.toLowerCase()); }
 
-function popularSelect() {
-  const sel = document.getElementById('mcob-cliente');
-  const val = sel.value;
-  sel.innerHTML = '<option value="">Selecione a cliente...</option>';
-  clientes.forEach(c => { const o = document.createElement('option'); o.value = c.id; o.textContent = c.nome; sel.appendChild(o); });
-  if (val) sel.value = val;
+function filtrarClienteCombo() {
+  const q = document.getElementById('mcob-cliente-busca').value.trim().toLowerCase();
+  const lista = document.getElementById('mcob-cliente-lista');
+  const ativos = clientes.filter(c => c.status !== 'inativo' || true); // mostra todas, ativas primeiro
+  const match = q ? ativos.filter(c => c.nome.toLowerCase().includes(q)) : ativos;
+  if (!match.length) {
+    lista.innerHTML = '<div class="combo-vazio">Nenhuma cliente encontrada</div>';
+  } else {
+    lista.innerHTML = match.slice(0, 40).map(c =>
+      `<div class="combo-item" onmousedown="selecionarClienteCombo('${c.id}','${esc(c.nome)}')">${c.nome}</div>`
+    ).join('');
+  }
+  lista.classList.add('open');
+}
+function selecionarClienteCombo(id, nome) {
+  document.getElementById('mcob-cliente').value = id;
+  document.getElementById('mcob-cliente-busca').value = nome;
+  fecharClienteCombo();
+}
+function fecharClienteCombo() {
+  document.getElementById('mcob-cliente-lista').classList.remove('open');
 }
 
 function abrirModalCliente() {
@@ -868,12 +922,12 @@ function renderCobrancas() {
   tb.innerHTML = lista.map(c => `<tr>
     <td class="td-title">${c.clientes?.nome||'—'}</td>
     <td data-label="Descrição">${c.descricao}</td>
-    <td data-label="Valor"><strong>${brl(c.valor)}</strong></td>
+    <td data-label="Valor"><strong>${brl(c.valor)}</strong>${c.status === 'pago' && c.valor_pago && Math.abs(c.valor_pago - (c.valor_parcela||c.valor)) > 0.01 ? `<br><small style="color:var(--gray);font-size:9px">pago: ${brl(c.valor_pago)}</small>` : ''}</td>
     <td data-label="Vencimento">${fmtD(c.vencimento)}</td>
     <td data-label="Forma">${c.forma_pagamento||'—'}</td>
     <td data-label="Status"><span class="badge badge-${c.status}">${c.status}</span></td>
     <td class="td-actions"><div class="actions">
-      ${c.status !== 'pago' ? `<button class="btn btn-pago btn-sm" onclick="marcarPago('${c.id}')">✓ Pago</button>` : ''}
+      ${c.status !== 'pago' ? `<button class="btn btn-pago btn-sm" onclick="abrirModalPagamento('${c.id}')">✓ Pago</button>` : ''}
       <button class="btn btn-ghost btn-sm" onclick="editarCobranca('${c.id}')">Editar</button>
       <button class="btn btn-danger btn-sm" onclick="excluirCobranca('${c.id}')">Excluir</button>
     </div></td>
@@ -897,6 +951,7 @@ function editarCobranca(id) {
   const c = cobrancas.find(x => x.id === id); if (!c) return;
   document.getElementById('mcob-id').value = c.id;
   document.getElementById('mcob-cliente').value = c.cliente_id||'';
+  document.getElementById('mcob-cliente-busca').value = c.clientes?.nome || (clientes.find(x=>x.id===c.cliente_id)||{}).nome || '';
   document.getElementById('mcob-desc').value = c.descricao||'';
   document.getElementById('mcob-valor-total').value = c.valor||'';
   document.getElementById('mcob-parcelas').value = c.parcelas||1;
@@ -917,7 +972,7 @@ function editarCobranca(id) {
 }
 
 function limparCobranca() {
-  ['mcob-id','mcob-desc','mcob-venc','mcob-obs','mcob-valor-total','mcob-valor-parcela','mcob-venc2','mcob-venc3','mcob-venc4'].forEach(id => document.getElementById(id).value = '');
+  ['mcob-id','mcob-desc','mcob-venc','mcob-obs','mcob-valor-total','mcob-valor-parcela','mcob-venc2','mcob-venc3','mcob-venc4','mcob-cliente-busca'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('mcob-cliente').value = '';
   document.getElementById('mcob-forma').value = '';
   document.getElementById('mcob-status').value = 'pendente';
@@ -969,13 +1024,40 @@ async function salvarCobranca() {
   } catch (e) { toast('Erro: ' + e.message, true); }
 }
 
-async function marcarPago(id) {
+function abrirModalPagamento(id) {
+  const c = cobrancas.find(x => x.id === id); if (!c) return;
+  const devido = c.valor_parcela || c.valor;
+  document.getElementById('mpag-id').value = c.id;
+  document.getElementById('mpag-cliente').value = c.clientes?.nome || '—';
+  document.getElementById('mpag-valor-devido').value = brl(devido);
+  document.getElementById('mpag-valor-pago').value = devido;
+  document.getElementById('mpag-obs').value = '';
+  atualizarDiferencaPagamento();
+  document.getElementById('modal-pagamento').classList.add('open');
+}
+
+function atualizarDiferencaPagamento() {
+  const devido = parseFloat(document.getElementById('mpag-valor-devido').value.replace('R$','').replace(/\./g,'').replace(',','.')) || 0;
+  const pago = parseFloat(document.getElementById('mpag-valor-pago').value) || 0;
+  const dif = pago - devido;
+  const el = document.getElementById('mpag-diferenca');
+  if (Math.abs(dif) < 0.01) { el.textContent = 'Valor exato da parcela.'; el.style.color = 'var(--gray)'; }
+  else if (dif > 0) { el.textContent = 'Pagou ' + brl(dif) + ' a mais que a parcela.'; el.style.color = 'var(--sage)'; }
+  else { el.textContent = 'Pagou ' + brl(Math.abs(dif)) + ' a menos que a parcela.'; el.style.color = 'var(--coral)'; }
+}
+
+async function confirmarPagamento() {
+  const id = document.getElementById('mpag-id').value;
+  const valorPago = parseFloat(document.getElementById('mpag-valor-pago').value);
+  if (!valorPago && valorPago !== 0) { toast('Informe o valor pago', true); return; }
+  const obs = document.getElementById('mpag-obs').value.trim() || null;
   try {
-    const r = await apiCall('marcarPago', { id });
-    if (!r.ok) { toast('Erro ao atualizar', true); return; }
-    toast('Marcada como paga ✦');
+    const r = await apiCall('marcarPago', { id, valor_pago: valorPago, obs_pagamento: obs });
+    if (!r.ok) { toast('Erro ao registrar pagamento', true); return; }
+    toast('Pagamento registrado ✦');
+    fecharModal('modal-pagamento');
     await loadCobrancas(); atualizarStats();
-  } catch (e) { toast('Erro ao atualizar: ' + e.message, true); }
+  } catch (e) { toast('Erro: ' + e.message, true); }
 }
 
 async function excluirCobranca(id) {

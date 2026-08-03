@@ -592,7 +592,7 @@ tbody tr.clicavel:active td { background:var(--gold-glow); }
         </div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label>Valor por Parcela</label><input type="text" id="mcob-valor-parcela" placeholder="—" readonly style="opacity:0.6;cursor:default"></div>
+        <div class="form-group"><label>Valor por Parcela (R$)</label><input type="number" id="mcob-valor-parcela" placeholder="0,00" step="0.01" min="0" inputmode="decimal"><small style="color:var(--gray);font-size:9px;letter-spacing:0.5px;margin-top:4px;display:block">Calculado automaticamente — edite se a cliente pagou valor diferente</small></div>
         <div class="form-group"><label>Vencimento 1ª Parcela *</label><input type="date" id="mcob-venc"></div>
       </div>
       <div id="venc-parcela-2" style="display:none">
@@ -994,7 +994,7 @@ function editarCobranca(id) {
   document.getElementById('mcob-desc').value = c.descricao||'';
   document.getElementById('mcob-valor-total').value = c.valor||'';
   document.getElementById('mcob-parcelas').value = c.parcelas||1;
-  document.getElementById('mcob-valor-parcela').value = c.valor_parcela ? 'R$ ' + Number(c.valor_parcela).toLocaleString('pt-BR',{minimumFractionDigits:2}) : '';
+  document.getElementById('mcob-valor-parcela').value = c.valor_parcela || '';
   document.getElementById('mcob-venc').value = c.vencimento||'';
   const p = c.parcelas||1;
   document.getElementById('venc-parcela-2').style.display = p >= 2 ? '' : 'none';
@@ -1029,7 +1029,8 @@ async function salvarCobranca() {
   const descricao = document.getElementById('mcob-desc').value.trim();
   const valorTotal = parseFloat(document.getElementById('mcob-valor-total').value);
   const parcelas = parseInt(document.getElementById('mcob-parcelas').value) || 1;
-  const valorParcela = valorTotal / parcelas;
+  const valorParcelaCampo = parseFloat(document.getElementById('mcob-valor-parcela').value);
+  const valorParcela = !isNaN(valorParcelaCampo) && valorParcelaCampo > 0 ? valorParcelaCampo : (valorTotal / parcelas);
   const vencimento = document.getElementById('mcob-venc').value;
   if (!cliente_id || !descricao || !valorTotal || !vencimento) { toast('Preencha os campos obrigatórios', true); return; }
 
@@ -1186,7 +1187,7 @@ function calcularParcelas() {
   const total = parseFloat(document.getElementById('mcob-valor-total').value) || 0;
   const parcelas = parseInt(document.getElementById('mcob-parcelas').value) || 1;
   const porParcela = total / parcelas;
-  document.getElementById('mcob-valor-parcela').value = total > 0 ? 'R$ ' + porParcela.toLocaleString('pt-BR', {minimumFractionDigits:2}) : '';
+  document.getElementById('mcob-valor-parcela').value = total > 0 ? porParcela.toFixed(2) : '';
 
   document.getElementById('venc-parcela-2').style.display = parcelas >= 2 ? '' : 'none';
   document.getElementById('venc-parcela-3').style.display = parcelas >= 3 ? '' : 'none';

@@ -285,11 +285,19 @@ tbody tr.clicavel:active td { background:var(--gold-glow); }
 .modal-foot { padding:16px 28px calc(24px + env(safe-area-inset-bottom, 0px)); display:flex; gap:12px; justify-content:flex-end; position:sticky; bottom:0; background:var(--surface); }
 .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 .parcela-hint { display:block; color:var(--gray); font-size:9px; letter-spacing:0.3px; margin:-8px 0 14px; }
-.parcelas-mini { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
-.mini-chip { font-size:9px; letter-spacing:0.5px; padding:4px 9px; border-radius:999px; border:1px solid var(--border2); color:var(--gray); }
-.mini-chip.mini-pago { color:var(--sage); border-color:rgba(143,191,154,0.3); background:var(--sage-dim); }
-.mini-chip.mini-atrasado { color:var(--coral); border-color:rgba(226,104,90,0.3); background:var(--coral-dim); }
-.mini-chip.mini-pendente { color:var(--gold2); border-color:var(--gold-line); background:var(--gold-dim); }
+.parcelas-mini { display:flex; flex-direction:column; gap:8px; margin-top:10px; width:100%; }
+.parcela-linha { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:var(--r-sm); border:1px solid var(--border2); background:var(--bg2); }
+.parcela-linha.pl-atrasado { border-color:rgba(226,104,90,0.3); }
+.parcela-linha.pl-pago { border-color:rgba(143,191,154,0.25); background:var(--sage-dim); }
+.parcela-check { width:18px; height:18px; flex-shrink:0; accent-color:var(--gold); cursor:pointer; }
+.parcela-check:disabled { cursor:default; accent-color:var(--sage); }
+.parcela-info { flex:1; font-size:11px; color:var(--off); letter-spacing:0.2px; }
+.parcela-info b { color:var(--gold2); font-weight:600; }
+.parcela-info .pl-tag-atrasado { color:var(--coral); }
+.parcela-info .pl-tag-pago { color:var(--sage); }
+.btn-quitar-mini { flex-shrink:0; border:1px solid rgba(37,211,102,0.3); color:#3ddc7d; background:rgba(37,211,102,0.08);
+  font-size:8px; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; padding:7px 12px; border-radius:999px; cursor:pointer; white-space:nowrap; }
+.btn-quitar-mini:active { transform:scale(0.96); }
 .combo-wrap { position:relative; }
 .combo-lista { position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--surface2); border:1px solid var(--gold-line);
   border-radius:var(--r-sm); max-height:220px; overflow-y:auto; z-index:20; display:none; box-shadow:0 16px 40px -12px rgba(0,0,0,0.6); }
@@ -981,6 +989,42 @@ function processarCobranca(c) {
   return c;
 }
 
+function renderParcelasDetalhe(c) {
+  if (c.parcelas <= 1) return '';
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  return `<div class="parcelas-mini" onclick="event.stopPropagation()">${c.parcelasInfo.map(p => {
+    const atrasada = !p.pago && new Date(p.vencimento + 'T00:00:00') < hoje;
+    const classe = p.pago ? 'pl-pago' : (atrasada ? 'pl-atrasado' : '');
+    const statusTxt = p.pago ? `<span class="pl-tag-pago">paga</span>` : (atrasada ? `<span class="pl-tag-atrasado">atrasada · vence ${fmtD(p.vencimento)}</span>` : `vence ${fmtD(p.vencimento)}`);
+    return `<label class="parcela-linha ${classe}">
+      <input type="checkbox" class="parcela-check" ${p.pago ? 'checked disabled' : ''} onchange="marcarParcelaCheckbox(this,'${c.id}',${p.numero},${p.valor})">
+      <span class="parcela-info"><b>${p.numero}ª parcela</b> — ${brl(p.valor)} — ${statusTxt}</span>
+      ${p.pago ? `<button type="button" class="btn-quitar-mini" onclick="event.stopPropagation();enviarConfirmacaoPagamento('${c.id}',${p.numero})">✉ Quitar</button>` : ''}
+    </label>`;
+  }).join('')}</div>`;
+}
+
+async function marcarParcelaCheckbox(el, cobrancaId, numero, valorPadrao) {
+  if (!confirm(`Confirmar pagamento da ${numero}ª parcela no valor de ${brl(valorPadrao)}?`)) { el.checked = false; return; }
+  el.disabled = true;
+  try {
+    const r = await apiCall('pagarParcela', { id: cobrancaId, numero, valor_pago: valorPadrao, data_pagamento: new Date().toISOString().split('T')[0] });
+    if (!r.ok) { toast('Erro ao registrar pagamento: ' + (r.error||''), true); el.checked = false; el.disabled = false; return; }
+    toast(r.todasPagas ? 'Última parcela paga — cobrança quitada ✦' : 'Parcela paga ✦');
+    await loadCobrancas(); atualizarStats();
+  } catch (e) { toast('Erro: ' + e.message, true); el.checked = false; el.disabled = false; }
+}
+
+function enviarConfirmacaoPagamento(cobrancaId, numero) {
+  const c = cobrancas.find(x => x.id === cobrancaId); if (!c) return;
+  const wpp = c.clientes?.whatsapp;
+  if (!wpp) { toast('Cliente sem WhatsApp cadastrado', true); return; }
+  const p = c.parcelasInfo.find(x => x.numero === numero);
+  const nome = (c.clientes?.nome || '').split(' ')[0];
+  const msg = `Olá, ${nome}! ✨\n\nConfirmando o recebimento do pagamento da *${numero}ª parcela*${c.parcelas > 1 ? ` de ${c.parcelas}` : ''} referente a:\n📦 ${c.descricao}\n💰 Valor pago: *${brl(p ? (p.valorPago||p.valor) : 0)}*\n\nObrigada pela confiança! 💛\n\n_Ane Joias_`;
+  window.open('https://wa.me/' + wpp.replace(/\D/g,'') + '?text=' + encodeURIComponent(msg), '_blank');
+}
+
 function atualizarStats() {
   document.getElementById('st-clientes').textContent = clientes.filter(c => c.status === 'ativo').length;
 
@@ -1019,7 +1063,7 @@ function renderProximas() {
   if (!lista.length) { tb.innerHTML = vazio('Nenhum vencimento próximo', 6); return; }
   tb.innerHTML = lista.map(c => `<tr class="clicavel compacta" onclick="handleRowTap(event,'cobranca','${c.id}')">
     <td class="td-title">${c.clientes?.nome||'—'}${c.parcelas>1 ? ` <small style="color:var(--gray);font-weight:400">(${c.proximaParcela.numero}/${c.parcelas})</small>`:''}<span class="chevron">▾</span></td>
-    <td class="td-detalhe td-desc" data-label="Descrição">${c.descricao}</td>
+    <td class="td-detalhe td-desc" data-label="Descrição">${c.descricao}${renderParcelasDetalhe(c)}</td>
     <td data-label="Parcela"><strong>${brl(c.valorRelevante)}</strong>${c.parcelas > 1 ? `<span class="valor-total-extra"><br><small style="color:var(--gray);font-size:9px">total: ${brl(c.valor)}</small></span>` : ''}</td>
     <td data-label="Vencimento">${fmtD(c.vencimentoRelevante)}</td>
     <td data-label="Status"><span class="badge badge-${c.statusEfetivo}">${c.statusEfetivo}</span></td>
@@ -1037,7 +1081,7 @@ function renderCobrancas() {
   if (!lista.length) { tb.innerHTML = vazio(filtroMes ? 'Nenhuma cobrança vence nesse mês' : 'Nenhuma cobrança encontrada', 7); return; }
   tb.innerHTML = lista.map(c => `<tr class="clicavel compacta" onclick="handleRowTap(event,'cobranca','${c.id}')">
     <td class="td-title">${c.clientes?.nome||'—'}${c.parcelas>1 ? ` <small style="color:var(--gray);font-weight:400">(${c.proximaParcela?c.proximaParcela.numero:c.parcelas}/${c.parcelas})</small>`:''}<span class="chevron">▾</span></td>
-    <td class="td-detalhe td-desc" data-label="Descrição">${c.descricao}${c.parcelas > 1 ? `<div class="parcelas-mini">${c.parcelasInfo.map(p => `<span class="mini-chip mini-${p.pago?'pago':(p===c.proximaParcela&&c.statusEfetivo==='atrasado'?'atrasado':'pendente')}">${p.numero}ª: ${p.pago?'paga':(fmtD(p.vencimento))}</span>`).join('')}</div>`:''}</td>
+    <td class="td-detalhe td-desc" data-label="Descrição">${c.descricao}${renderParcelasDetalhe(c)}</td>
     <td data-label="Parcela"><strong>${brl(c.valorRelevante)}</strong><span class="valor-total-extra">${c.parcelas > 1 ? `<br><small style="color:var(--gray);font-size:9px">total: ${brl(c.valor)}</small>` : ''}</span></td>
     <td data-label="Vencimento">${fmtD(c.vencimentoRelevante)}</td>
     <td class="td-detalhe" data-label="Forma">${c.forma_pagamento||'—'}</td>

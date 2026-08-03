@@ -196,7 +196,10 @@ select option { background:var(--surface); }
 .medallion-txt .medallion-val { font-family:var(--font-serif); font-size:26px; color:var(--gold2); font-weight:400; }
 .medallion-txt .medallion-sub { font-size:10px; color:var(--gray); margin-top:4px; }
 
-.stats-scroll { display:flex; gap:14px; overflow-x:auto; scroll-snap-type:x proximity; padding-bottom:4px; flex:1 1 320px; }
+.stats-scroll { display:flex; gap:14px; overflow-x:auto; scroll-snap-type:x proximity; padding-bottom:4px; flex:1 1 320px; position:relative; }
+.stats-scroll::after { content:''; position:absolute; top:0; bottom:4px; right:0; width:28px; pointer-events:none;
+  background:linear-gradient(to right, transparent, var(--bg) 85%); }
+@media (min-width: 901px) { .stats-scroll::after { display:none; } }
 .stats-scroll::-webkit-scrollbar { display:none; }
 .stat-card { background:var(--surface); border:1px solid var(--border2); border-radius:var(--r-md); padding:18px 20px;
   scroll-snap-align:start; min-width:150px; flex:1 1 150px; position:relative; overflow:hidden; }
@@ -257,6 +260,18 @@ tbody tr.clicavel:active td { background:var(--gold-glow); }
   tbody td.td-actions .actions { width:100%; }
   tbody td.td-empty { display:block; text-align:center; }
   tbody td.td-empty::before { content:none; }
+
+  /* linha compacta: detalhes só aparecem expandidos */
+  tbody tr.compacta { cursor:pointer; }
+  tbody tr.compacta .td-title { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .chevron { flex-shrink:0; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center;
+    color:var(--gray); font-size:11px; transition:transform .25s; border:1px solid var(--border2); border-radius:50%; }
+  tbody tr.compacta.expandida .chevron { transform:rotate(180deg); color:var(--gold2); border-color:var(--gold-line); }
+  tbody tr.compacta .td-detalhe { display:none; }
+  tbody tr.compacta.expandida .td-detalhe { display:flex; }
+  tbody tr.compacta .td-detalhe.td-desc { display:none; flex-direction:column; align-items:flex-start; text-align:left; }
+  tbody tr.compacta.expandida .td-detalhe.td-desc { display:flex; }
+  tbody tr.compacta .td-detalhe.td-desc::before { margin-bottom:3px; }
 }
 
 /* ============ MODALS (bottom-sheet no mobile) ============ */
@@ -779,6 +794,15 @@ function fabAction() {
   else if (secaoAtual === 'cobrancas') abrirModalCobranca();
 }
 
+/* Toque numa linha: no mobile expande/recolhe os detalhes; no desktop abre a edição direto */
+function handleRowTap(ev, tipo, id) {
+  if (window.matchMedia('(max-width: 900px)').matches) {
+    ev.currentTarget.classList.toggle('expandida');
+  } else {
+    if (tipo === 'cliente') editarCliente(id); else editarCobranca(id);
+  }
+}
+
 /* ---- CLIENTES ---- */
 async function loadClientes() {
   try {
@@ -795,11 +819,11 @@ function renderClientes(q = '') {
   let lista = clientes;
   if (q) lista = lista.filter(c => c.nome.toLowerCase().includes(q) || (c.email||'').toLowerCase().includes(q));
   if (!lista.length) { tb.innerHTML = vazio('Nenhuma cliente cadastrada', 6); return; }
-  tb.innerHTML = lista.map(c => `<tr class="clicavel" onclick="editarCliente('${c.id}')">
-    <td class="td-title">${c.nome}</td>
+  tb.innerHTML = lista.map(c => `<tr class="clicavel compacta" onclick="handleRowTap(event,'cliente','${c.id}')">
+    <td class="td-title">${c.nome}<span class="chevron">▾</span></td>
     <td data-label="WhatsApp">${c.whatsapp||'—'}</td>
-    <td data-label="E-mail">${c.email||'—'}</td>
-    <td data-label="CPF/CNPJ">${c.cpf_cnpj||'—'}</td>
+    <td class="td-detalhe" data-label="E-mail">${c.email||'—'}</td>
+    <td class="td-detalhe" data-label="CPF/CNPJ">${c.cpf_cnpj||'—'}</td>
     <td data-label="Status"><span class="badge badge-${c.status}">${c.status}</span></td>
     <td class="td-actions"><div class="actions" onclick="event.stopPropagation()">
       <button class="btn btn-ghost btn-sm" onclick="editarCliente('${c.id}')">Editar</button>
@@ -933,9 +957,9 @@ function renderProximas() {
     return diff <= 7;
   }).slice(0, 12);
   if (!lista.length) { tb.innerHTML = vazio('Nenhum vencimento próximo', 6); return; }
-  tb.innerHTML = lista.map(c => `<tr class="clicavel" onclick="editarCobranca('${c.id}')">
-    <td class="td-title">${c.clientes?.nome||'—'}</td>
-    <td data-label="Descrição">${c.descricao}</td>
+  tb.innerHTML = lista.map(c => `<tr class="clicavel compacta" onclick="handleRowTap(event,'cobranca','${c.id}')">
+    <td class="td-title">${c.clientes?.nome||'—'}<span class="chevron">▾</span></td>
+    <td class="td-detalhe td-desc" data-label="Descrição">${c.descricao}</td>
     <td data-label="Valor"><strong>${brl(c.valor)}</strong></td>
     <td data-label="Vencimento">${fmtD(c.vencimento)}</td>
     <td data-label="Status"><span class="badge badge-${c.status}">${c.status}</span></td>
@@ -951,12 +975,12 @@ function renderCobrancas() {
   let lista = filtroStatus === 'todas' ? cobrancas : cobrancas.filter(c => c.status === filtroStatus);
   if (filtroMes) lista = lista.filter(c => (c.vencimento||'').slice(0,7) === filtroMes);
   if (!lista.length) { tb.innerHTML = vazio(filtroMes ? 'Nenhuma cobrança vence nesse mês' : 'Nenhuma cobrança encontrada', 7); return; }
-  tb.innerHTML = lista.map(c => `<tr class="clicavel" onclick="editarCobranca('${c.id}')">
-    <td class="td-title">${c.clientes?.nome||'—'}</td>
-    <td data-label="Descrição">${c.descricao}</td>
+  tb.innerHTML = lista.map(c => `<tr class="clicavel compacta" onclick="handleRowTap(event,'cobranca','${c.id}')">
+    <td class="td-title">${c.clientes?.nome||'—'}<span class="chevron">▾</span></td>
+    <td class="td-detalhe td-desc" data-label="Descrição">${c.descricao}</td>
     <td data-label="Valor"><strong>${brl(c.valor)}</strong>${c.status === 'pago' && c.valor_pago && Math.abs(c.valor_pago - (c.valor_parcela||c.valor)) > 0.01 ? `<br><small style="color:var(--gray);font-size:9px">pago: ${brl(c.valor_pago)}</small>` : ''}</td>
     <td data-label="Vencimento">${fmtD(c.vencimento)}</td>
-    <td data-label="Forma">${c.forma_pagamento||'—'}</td>
+    <td class="td-detalhe" data-label="Forma">${c.forma_pagamento||'—'}</td>
     <td data-label="Status"><span class="badge badge-${c.status}">${c.status}</span></td>
     <td class="td-actions"><div class="actions" onclick="event.stopPropagation()">
       ${c.status !== 'pago' ? `<button class="btn btn-pago btn-sm" onclick="abrirModalPagamento('${c.id}')">✓ Pago</button>` : ''}

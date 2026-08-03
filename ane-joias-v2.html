@@ -196,10 +196,7 @@ select option { background:var(--surface); }
 .medallion-txt .medallion-val { font-family:var(--font-serif); font-size:26px; color:var(--gold2); font-weight:400; }
 .medallion-txt .medallion-sub { font-size:10px; color:var(--gray); margin-top:4px; }
 
-.stats-scroll { display:flex; gap:14px; overflow-x:auto; scroll-snap-type:x proximity; padding-bottom:4px; flex:1 1 320px; position:relative; }
-.stats-scroll::after { content:''; position:absolute; top:0; bottom:4px; right:0; width:28px; pointer-events:none;
-  background:linear-gradient(to right, transparent, var(--bg) 85%); }
-@media (min-width: 901px) { .stats-scroll::after { display:none; } }
+.stats-scroll { display:flex; gap:14px; overflow-x:auto; scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch; padding-bottom:4px; flex:1 1 320px; }
 .stats-scroll::-webkit-scrollbar { display:none; }
 .stat-card { background:var(--surface); border:1px solid var(--border2); border-radius:var(--r-md); padding:18px 20px;
   scroll-snap-align:start; min-width:150px; flex:1 1 150px; position:relative; overflow:hidden; }

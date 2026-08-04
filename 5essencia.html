@@ -942,7 +942,7 @@ function mostrarPopupGoogle(){
       <div style="width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,rgba(79,142,255,0.15),rgba(191,90,242,0.1));border:1px solid rgba(79,142,255,0.2);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:var(--blue);margin:0 auto 16px">G</div>
       <div style="font-size:17px;font-weight:700;margin-bottom:8px">Conecte sua conta Google</div>
       <div style="font-size:13px;color:var(--ink3);margin-bottom:20px;line-height:1.6">Autorize uma vez por sessão e sincronize tudo automaticamente.</div>
-      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:20px;text-align:left">
+      <div style="background:var(--bg2);border:1px solid var(--b1);border-radius:14px;padding:14px;margin-bottom:20px;text-align:left">
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink3);margin-bottom:10px">Permissões solicitadas</div>
         <div style="display:flex;flex-direction:column;gap:8px">
           <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink2)"><span style="color:var(--blue)">◷</span> Google Agenda — criar e sincronizar eventos</div>
@@ -1610,7 +1610,7 @@ async function renderPortalFin(){
           <div style="font-size:13px;color:var(--ink3)">Digite sua senha para acessar o financeiro</div>
         </div>
         <div class="fg" style="margin-bottom:14px">
-          <input type="password" id="fin-senha" placeholder="Sua senha de acesso" style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;color:var(--ink);font-family:var(--font);font-size:16px;padding:14px 16px;outline:none;width:100%;text-align:center;letter-spacing:4px" onkeydown="if(event.key==='Enter')verificarSenhaFin()">
+          <input type="password" id="fin-senha" placeholder="Sua senha de acesso" style="background:var(--bg2);border:1px solid var(--b1);border-radius:14px;color:var(--ink);font-family:var(--font);font-size:16px;padding:14px 16px;outline:none;width:100%;text-align:center;letter-spacing:4px" onkeydown="if(event.key==='Enter')verificarSenhaFin()">
         </div>
         <div id="fin-senha-err" style="color:var(--red);font-size:12.5px;text-align:center;margin-bottom:10px;display:none">Senha incorreta</div>
         <button class="btn btn-primary" style="width:100%;justify-content:center;padding:14px" onclick="verificarSenhaFin()">Entrar</button>
@@ -1703,32 +1703,38 @@ async function mostrarFinanceiro(){
 }
 
 function gerarPixBRCode(chave, valor, nome, cidade){
-  // Gera o payload Pix padrão BC (EMV)
-  const pixKey=chave;
   const merchantName=nome.substring(0,25).toUpperCase();
   const merchantCity=cidade.substring(0,15).toUpperCase();
   const amount=parseFloat(valor).toFixed(2);
 
-  function tlv(id,value){const len=String(value.length).padStart(2,'0');return id+len+value;}
+  function tlv(id,value){
+    const len=String(value.length).padStart(2,'0');
+    return id+len+value;
+  }
 
-  const merchantAccountInfo=tlv('00','BR.GOV.BCB.PIX')+tlv('01',pixKey);
+  // Campo 26 — Merchant Account Info
+  const gui=tlv('00','BR.GOV.BCB.PIX');
+  const key=tlv('01',chave);
+  const mai=tlv('26',gui+key);
+
+  // Monta payload sem CRC
   const payload=
-    tlv('00','01')+
-    tlv('26',merchantAccountInfo)+
-    tlv('52','0000')+
-    tlv('53','986')+
-    tlv('54',amount)+
-    tlv('58','BR')+
-    tlv('59',merchantName)+
-    tlv('60',merchantCity)+
-    '6304';
+    tlv('00','01')+           // Payload format
+    mai+                       // Merchant account info
+    tlv('52','0000')+         // Merchant category code
+    tlv('53','986')+          // Transaction currency (BRL)
+    tlv('54',amount)+         // Transaction amount
+    tlv('58','BR')+           // Country code
+    tlv('59',merchantName)+   // Merchant name
+    tlv('60',merchantCity)+   // Merchant city
+    '63' + '04';              // CRC field marker (sem valor ainda)
 
-  // CRC16
+  // CRC16-CCITT
   function crc16(str){
     let crc=0xFFFF;
     for(let i=0;i<str.length;i++){
       crc^=str.charCodeAt(i)<<8;
-      for(let j=0;j<8;j++) crc=(crc&0x8000)?(crc<<1)^0x1021:(crc<<1);
+      for(let j=0;j<8;j++) crc=(crc&0x8000)?((crc<<1)^0x1021):(crc<<1);
     }
     return(crc&0xFFFF).toString(16).toUpperCase().padStart(4,'0');
   }
@@ -1755,7 +1761,7 @@ function abrirPagamento(lancId, valor){
 
       <div style="font-size:12px;color:var(--ink3);margin-bottom:12px">Escaneie com seu banco ou copie o código</div>
 
-      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:14px;text-align:left">
+      <div style="background:var(--bg2);border:1px solid var(--b1);border-radius:12px;padding:12px;margin-bottom:14px;text-align:left">
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink3);margin-bottom:6px">Código Pix copia e cola</div>
         <div style="font-size:10px;color:var(--ink2);word-break:break-all;line-height:1.5;margin-bottom:8px">${brcode}</div>
         <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center" onclick="navigator.clipboard.writeText('${brcode}').then(()=>toast('✅ Código copiado!'))">
@@ -1929,7 +1935,6 @@ async function saveCliente(id){
     } else {
       await db.from('clientes').update({user_id:result.id}).eq('id',clienteId);
       toast(`✓ Acesso criado! Login: ${email} · Senha: ${SENHA}`);
-      emailBoasVindas(nome,email);
       if(wpp){
         setTimeout(()=>{
           if(confirm(`Enviar boas-vindas para ${nome.split(' ')[0]} via WhatsApp?`)){
@@ -2041,7 +2046,7 @@ function atualizarPreviewParcelas(){
     d.setMonth(d.getMonth()+i);
     const mes=MESES[d.getMonth()];
     const ano=d.getFullYear();
-    html+=`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)">
+    html+=`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--b1)">
       <span>Parcela ${i+1}/${nparc} — ${mes}/${ano}</span>
       <span style="font-weight:600;color:var(--blue)">${R(valorParc)}</span>
     </div>`;
@@ -2154,7 +2159,7 @@ function renderPagamentosMes(meses,todos,cls){
     </div>
 
     <!-- NAVEGAÇÃO MENSAL -->
-    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg1);border:1px solid var(--border);border-radius:16px;padding:12px 16px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg1);border:1px solid var(--b1);border-radius:16px;padding:12px 16px;margin-bottom:14px">
       <button class="btn btn-ghost btn-sm" onclick="navFinMes(1)" ${finMesIdx>=meses.length-1?'disabled':''}>‹</button>
       <div style="text-align:center">
         <div style="font-size:15px;font-weight:700">${nomeMes}</div>
@@ -2555,7 +2560,7 @@ function mostrarTopbarCliente(){
   const logoArea=g('topbar-logo-area');
   if(logoArea){
     logoArea.innerHTML=`
-      <button onclick="abrirSidebar()" style="width:36px;height:36px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent">
+      <button onclick="abrirSidebar()" style="width:36px;height:36px;border-radius:10px;background:var(--bg2);border:1px solid var(--b1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent">
         <span style="width:16px;height:2px;background:var(--ink2);border-radius:2px;display:block"></span>
         <span style="width:16px;height:2px;background:var(--ink2);border-radius:2px;display:block"></span>
         <span style="width:12px;height:2px;background:var(--ink2);border-radius:2px;display:block;align-self:flex-start;margin-left:2px"></span>
@@ -2635,13 +2640,13 @@ async function abrirRelatorio(clienteId){
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink3);margin-bottom:10px">Projetos e entregáveis</div>
       ${(prj||[]).length===0?'<p style="font-size:13px;color:var(--ink3)">Nenhum projeto cadastrado</p>':''}
       ${(prj||[]).map((p,i)=>`
-        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:8px">
+        <div style="background:var(--bg2);border:1px solid var(--b1);border-radius:14px;padding:12px;margin-bottom:8px">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
             <input type="checkbox" id="rel-proj-${i}" checked style="width:16px;height:16px;accent-color:var(--blue);flex-shrink:0">
             <label for="rel-proj-${i}" style="font-size:13.5px;font-weight:600;cursor:pointer;flex:1">${p.titulo}</label>
             ${badge(p.status)}
           </div>
-          <textarea id="rel-obs-${i}" placeholder="Observação sobre este projeto (opcional)..." style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:9px 11px;font-size:13px;min-height:50px;width:100%;color:var(--ink);font-family:var(--font);outline:none;resize:none"></textarea>
+          <textarea id="rel-obs-${i}" placeholder="Observação sobre este projeto (opcional)..." style="background:var(--bg3);border:1px solid var(--b1);border-radius:10px;padding:9px 11px;font-size:13px;min-height:50px;width:100%;color:var(--ink);font-family:var(--font);outline:none;resize:none"></textarea>
         </div>
       `).join('')}
     </div>
@@ -2749,7 +2754,7 @@ async function renderPortalMetricas(){
 
     ${meses.length===0?`<div class="empty"><div class="empty-icon">◉</div><p>Nenhuma metrica disponivel ainda</p></div>`:`
     <!-- NAVEGAÇÃO DE MÊS -->
-    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg1);border:1px solid var(--border);border-radius:var(--r2);padding:12px 16px;margin-bottom:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg1);border:1px solid var(--b1);border-radius:var(--r2);padding:12px 16px;margin-bottom:16px">
       <button class="btn btn-ghost btn-sm" id="btn-mes-ant" onclick="navMetrica(-1)">‹</button>
       <span style="font-size:14px;font-weight:600" id="label-mes">${fmtMes(mesVisualizando)}</span>
       <button class="btn btn-ghost btn-sm" id="btn-mes-prox" onclick="navMetrica(1)">›</button>
@@ -2778,7 +2783,7 @@ function renderKpiCards(m){
   ];
   return`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
     ${kpis.map(k=>`
-      <div class="metric-card" style="background:var(--bg1);border:1px solid var(--border)">
+      <div class="metric-card" style="background:var(--bg1);border:1px solid var(--b1)">
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink3);margin-bottom:8px">${k.label}</div>
         <div style="font-size:${k.val>=1000000?'18px':'24px'};font-weight:800;letter-spacing:-1px;color:${k.color}">${k.fmt(k.val)}</div>
       </div>
@@ -2975,7 +2980,7 @@ async function abrirNotificacoes(){
       <button class="btn btn-primary btn-sm" style="margin-bottom:12px;width:100%;justify-content:center" onclick="formNovaNotificacao()">+ Criar notificação</button>`:''}
       ${(notifs||[]).length===0?'<div class="empty"><p>Nenhuma notificação</p></div>':''}
       ${(notifs||[]).map(n=>`
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--b1)">
           <div style="width:36px;height:36px;border-radius:50%;background:${n.tipo==='info'?'rgba(79,142,255,0.15)':n.tipo==='sucesso'?'rgba(52,199,89,0.15)':n.tipo==='alerta'?'rgba(255,159,10,0.15)':'rgba(191,90,242,0.15)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">
             ${n.tipo==='info'?'◈':n.tipo==='sucesso'?'◎':n.tipo==='alerta'?'◷':'◉'}
           </div>
@@ -3053,9 +3058,9 @@ async function renderPortalInsights(){
     </div>
 
     <!-- NOVA IDEIA -->
-    <div style="background:var(--bg1);border:1px solid var(--border);border-radius:18px;padding:16px;margin-bottom:16px">
+    <div style="background:var(--bg1);border:1px solid var(--b1);border-radius:18px;padding:16px;margin-bottom:16px">
       <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--ink2)">Nova ideia ou sugestão</div>
-      <textarea id="insight-texto" placeholder="Compartilhe uma ideia, sugestão ou feedback…" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:12px;color:var(--ink);font-family:var(--font);font-size:14px;padding:12px;outline:none;resize:none;min-height:90px;margin-bottom:10px"></textarea>
+      <textarea id="insight-texto" placeholder="Compartilhe uma ideia, sugestão ou feedback…" style="width:100%;background:var(--bg2);border:1px solid var(--b1);border-radius:12px;color:var(--ink);font-family:var(--font);font-size:14px;padding:12px;outline:none;resize:none;min-height:90px;margin-bottom:10px"></textarea>
       <div style="display:flex;gap:8px">
         <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="enviarInsight()">Enviar ideia</button>
         <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="solicitarCall()">Marcar call</button>
@@ -3065,7 +3070,7 @@ async function renderPortalInsights(){
     <!-- LISTA DE INSIGHTS -->
     ${(insights||[]).length===0?'<div class="empty"><div class="empty-icon">◉</div><p>Nenhuma ideia ainda. Compartilhe a primeira!</p></div>':''}
     ${(insights||[]).map(i=>`
-      <div style="background:var(--bg1);border:1px solid ${i.tipo==='call'?'rgba(79,142,255,0.25)':i.tipo==='ideia'?'rgba(191,90,242,0.2)':'var(--border)'};border-radius:16px;padding:14px 16px;margin-bottom:10px">
+      <div style="background:var(--bg1);border:1px solid ${i.tipo==='call'?'rgba(79,142,255,0.25)':i.tipo==='ideia'?'rgba(191,90,242,0.2)':'var(--b1)'};border-radius:16px;padding:14px 16px;margin-bottom:10px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
           <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${i.tipo==='call'?'var(--blue)':i.tipo==='ideia'?'var(--purple)':'var(--ink3)'}">
             ${i.tipo==='call'?'◷ Call solicitada':i.tipo==='ideia'?'◉ Ideia':'◈ Feedback'}
@@ -3339,7 +3344,7 @@ function formContrato(){
     </div>
     <div id="ct-pdf-wrap" class="fg" style="display:none">
       <label>Arquivo PDF *</label>
-      <input type="file" id="ct-pdf-file" accept="application/pdf" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:10px;color:var(--ink);font-family:var(--font);font-size:13px">
+      <input type="file" id="ct-pdf-file" accept="application/pdf" style="width:100%;background:var(--bg2);border:1px solid var(--b1);border-radius:12px;padding:10px;color:var(--ink);font-family:var(--font);font-size:13px">
       <div style="font-size:11px;color:var(--ink3);margin-top:4px">O PDF será exibido para o cliente assinar digitalmente</div>
     </div>
   `,`
@@ -3397,15 +3402,15 @@ async function verContrato(id){
   openModal(c.titulo,`
     <div style="font-size:11px;color:var(--ink3);margin-bottom:8px">${c.clientes?.nome_completo||'—'} · ${badge(c.status)}</div>
     ${c.pdf_base64
-      ?`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:13px;color:var(--ink2);margin-bottom:12px">📄 Contrato em PDF — visualizado pelo cliente no portal</div>`
-      :`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:13px;line-height:1.7;color:var(--ink2);max-height:200px;overflow-y:auto;white-space:pre-wrap">${c.conteudo}</div>`
+      ?`<div style="background:var(--bg2);border:1px solid var(--b1);border-radius:12px;padding:14px;font-size:13px;color:var(--ink2);margin-bottom:12px">📄 Contrato em PDF — visualizado pelo cliente no portal</div>`
+      :`<div style="background:var(--bg2);border:1px solid var(--b1);border-radius:12px;padding:14px;font-size:13px;line-height:1.7;color:var(--ink2);max-height:200px;overflow-y:auto;white-space:pre-wrap">${c.conteudo}</div>`
     }
     ${c.status==='assinado'?`
     <div style="margin-top:12px">
       <div style="font-size:11px;font-weight:700;color:var(--ink3);margin-bottom:6px">Assinatura</div>
-      <img src="${c.assinatura_img}" style="border:1px solid var(--border);border-radius:8px;max-width:100%;background:#fff">
-      ${c.selfie_img?`<div style="font-size:11px;font-weight:700;color:var(--ink3);margin:8px 0 4px">Selfie de confirmação</div><img src="${c.selfie_img}" style="border:1px solid var(--border);border-radius:8px;max-width:180px">`:''}
-      ${c.documento_img?`<div style="font-size:11px;font-weight:700;color:var(--ink3);margin:8px 0 4px">Documento</div><img src="${c.documento_img}" style="border:1px solid var(--border);border-radius:8px;max-width:100%">`:''}
+      <img src="${c.assinatura_img}" style="border:1px solid var(--b1);border-radius:8px;max-width:100%;background:#fff">
+      ${c.selfie_img?`<div style="font-size:11px;font-weight:700;color:var(--ink3);margin:8px 0 4px">Selfie de confirmação</div><img src="${c.selfie_img}" style="border:1px solid var(--b1);border-radius:8px;max-width:180px">`:''}
+      ${c.documento_img?`<div style="font-size:11px;font-weight:700;color:var(--ink3);margin:8px 0 4px">Documento</div><img src="${c.documento_img}" style="border:1px solid var(--b1);border-radius:8px;max-width:100%">`:''}
       <div style="font-size:11px;color:var(--ink3);margin-top:6px">Assinado em ${c.assinado_em?new Date(c.assinado_em).toLocaleString('pt-BR'):'—'} · IP: ${c.ip_assinatura||'—'}</div>
     </div>`:''}
   `,`<button class="btn btn-ghost" onclick="closeModal()">Fechar</button>`);
@@ -3426,7 +3431,7 @@ async function abrirContratoCliente(id){
 
   if(c.status==='assinado'){
     viewer.innerHTML=`
-      <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--b1);flex-shrink:0">
         <button onclick="fecharViewer()" style="background:none;border:none;color:var(--ink);font-size:20px;cursor:pointer;padding:4px">←</button>
         <div style="flex:1;font-size:14px;font-weight:700">${c.titulo}</div>
         <span class="badge badge-ativo">Assinado</span>
@@ -3436,7 +3441,7 @@ async function abrirContratoCliente(id){
           <div style="font-size:16px;font-weight:700;color:var(--green)">◎ Contrato assinado</div>
           <div style="font-size:12px;color:var(--ink3);margin-top:4px">${c.assinado_em?new Date(c.assinado_em).toLocaleString('pt-BR'):''}</div>
         </div>
-        ${c.pdf_base64?`<canvas id="pdf-canvas-signed" style="width:100%;max-width:480px;border-radius:12px;border:1px solid var(--border)"></canvas>`:`<div style="background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:16px;font-size:13px;line-height:1.7;color:var(--ink2);width:100%;max-width:480px;white-space:pre-wrap">${c.conteudo}</div>`}
+        ${c.pdf_base64?`<canvas id="pdf-canvas-signed" style="width:100%;max-width:480px;border-radius:12px;border:1px solid var(--b1)"></canvas>`:`<div style="background:var(--bg1);border:1px solid var(--b1);border-radius:12px;padding:16px;font-size:13px;line-height:1.7;color:var(--ink2);width:100%;max-width:480px;white-space:pre-wrap">${c.conteudo}</div>`}
       </div>
     `;
     document.body.appendChild(viewer);
@@ -3446,7 +3451,7 @@ async function abrirContratoCliente(id){
 
   // Contrato pendente — visualizador com navegação
   viewer.innerHTML=`
-    <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg1)">
+    <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--b1);flex-shrink:0;background:var(--bg1)">
       <button onclick="fecharViewer()" style="background:none;border:none;color:var(--ink);font-size:20px;cursor:pointer;padding:4px">←</button>
       <div style="flex:1">
         <div style="font-size:13px;font-weight:700">${c.titulo}</div>
@@ -3458,19 +3463,19 @@ async function abrirContratoCliente(id){
     <!-- ÁREA DO PDF -->
     <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;align-items:center;padding:16px;gap:12px" id="pdf-scroll-area">
       ${c.pdf_base64
-        ?`<canvas id="pdf-canvas" style="width:100%;max-width:520px;border-radius:12px;border:1px solid var(--border);box-shadow:0 4px 20px rgba(0,0,0,0.4)"></canvas>
+        ?`<canvas id="pdf-canvas" style="width:100%;max-width:520px;border-radius:12px;border:1px solid var(--b1);box-shadow:0 4px 20px rgba(0,0,0,0.4)"></canvas>
            <div style="display:flex;align-items:center;gap:16px;padding:8px 0">
              <button id="btn-prev" onclick="mudarPaginaPDF(-1)" class="btn btn-ghost btn-sm" disabled>‹ Anterior</button>
              <span id="pdf-pagnum" style="font-size:12px;color:var(--ink3)">Pág 1</span>
              <button id="btn-next" onclick="mudarPaginaPDF(1)" class="btn btn-primary btn-sm">Próxima ›</button>
            </div>`
-        :`<div style="background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:20px;font-size:13px;line-height:1.8;color:var(--ink2);width:100%;max-width:520px;white-space:pre-wrap">${c.conteudo}</div>
+        :`<div style="background:var(--bg1);border:1px solid var(--b1);border-radius:12px;padding:20px;font-size:13px;line-height:1.8;color:var(--ink2);width:100%;max-width:520px;white-space:pre-wrap">${c.conteudo}</div>
           <button onclick="mostrarFluxoAssinatura('${c.id}')" class="btn btn-primary" style="width:100%;max-width:520px;justify-content:center;padding:14px;font-size:15px">Assinar contrato →</button>`
       }
     </div>
 
     <!-- FLUXO DE ASSINATURA (aparece após ler tudo) -->
-    <div id="assinatura-panel" style="display:none;flex-direction:column;gap:0;border-top:1px solid var(--border);flex-shrink:0;max-height:70dvh;overflow-y:auto">
+    <div id="assinatura-panel" style="display:none;flex-direction:column;gap:0;border-top:1px solid var(--b1);flex-shrink:0;max-height:70dvh;overflow-y:auto">
       <div style="padding:16px;background:var(--bg1)">
         <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--ink)">Para assinar, complete os 3 passos:</div>
 
@@ -3480,7 +3485,7 @@ async function abrirContratoCliente(id){
             <span style="width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</span>
             <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink3)">Selfie de confirmação</span>
           </div>
-          <label style="display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px;cursor:pointer" onclick="document.getElementById('ct-selfie-file').click()">
+          <label style="display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--b1);border-radius:12px;padding:12px;cursor:pointer" onclick="document.getElementById('ct-selfie-file').click()">
             <span style="font-size:20px">📸</span>
             <span style="font-size:13px;color:var(--ink2)">Tirar selfie com câmera frontal</span>
             <span id="selfie-ok" style="margin-left:auto;color:var(--green);display:none">✓</span>
@@ -3494,7 +3499,7 @@ async function abrirContratoCliente(id){
             <span style="width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</span>
             <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink3)">Documento de identidade</span>
           </div>
-          <label style="display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px;cursor:pointer" onclick="document.getElementById('ct-doc-file').click()">
+          <label style="display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--b1);border-radius:12px;padding:12px;cursor:pointer" onclick="document.getElementById('ct-doc-file').click()">
             <span style="font-size:20px">🪪</span>
             <span style="font-size:13px;color:var(--ink2)">Foto do RG ou CNH</span>
             <span id="doc-ok" style="margin-left:auto;color:var(--green);display:none">✓</span>
@@ -3508,7 +3513,7 @@ async function abrirContratoCliente(id){
             <span style="width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</span>
             <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink3)">Assinatura digital</span>
           </div>
-          <canvas id="assin-canvas" style="background:#fff;border:1px solid var(--border);border-radius:12px;width:100%;height:130px;touch-action:none;display:block;cursor:crosshair"></canvas>
+          <canvas id="assin-canvas" style="background:#fff;border:1px solid var(--b1);border-radius:12px;width:100%;height:130px;touch-action:none;display:block;cursor:crosshair"></canvas>
           <button onclick="limparAssinatura()" class="btn btn-ghost btn-sm" style="margin-top:6px">Limpar</button>
         </div>
 

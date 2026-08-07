@@ -269,6 +269,8 @@
     transition:border-color .15s;
   }
   .mini-consulta:hover{border-color:var(--gold-dim);}
+  .mini-concluida{background:var(--sage-soft); border-color:rgba(137,148,111,.35);}
+  .mini-concluida:hover{border-color:var(--sage);}
   .mini-consulta-name{font-size:12.5px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .mini-consulta-date{font-size:11px; color:var(--sage); flex-shrink:0;}
   .card-locked{cursor:default; opacity:.92;}
@@ -1350,7 +1352,7 @@ function getBoardColumns(){
     return [
       { stageKey:'Consulta', title:'Consulta' },
       { stageKey:'Cirurgia', title:'Cirurgia', filterFn: l => l.Status_Cirurgia !== 'Concluída' },
-      { stageKey:'Cirurgia', title:'Concluídas', filterFn: l => l.Status_Cirurgia === 'Concluída', virtualAction:'markSurgeryComplete' },
+      { stageKey:'Cirurgia', title:'Concluídas', filterFn: l => l.Status_Cirurgia === 'Concluída', virtualAction:'markSurgeryComplete', minimized:true, minimizedType:'concluida' },
       { stageKey:'Remarketing', title:'Remarketing', filterFn: l => remarketingPertenceACristiane(l) }
     ];
   }
@@ -1434,7 +1436,9 @@ function renderBoard(){
       <div class="column-body" data-stage="${col.stageKey}" data-dropzone="${col.isDropzone === false ? 'false' : 'true'}" data-virtual-action="${col.virtualAction || ''}">
         ${leads.length
           ? (col.minimized
-              ? (col.stageKey === 'Frio' ? leads.map(miniFrioRow).join('') : leads.map(miniConsultaRow).join(''))
+              ? (col.minimizedType === 'concluida' ? leads.map(miniConcluidaRow).join('')
+                 : col.stageKey === 'Frio' ? leads.map(miniFrioRow).join('')
+                 : leads.map(miniConsultaRow).join(''))
               : leads.map((l, i) => leadCard(l, i + 1)).join(''))
           : `<div class="empty-col">${col.emptyMsg || 'Vazio'}</div>`}
       </div>
@@ -1445,6 +1449,13 @@ function renderBoard(){
     item.addEventListener('click', () => {
       const lead = STATE.leads.find(l => l.ID === item.dataset.id);
       if(lead) openEditConsultaModal(lead);
+    });
+  });
+
+  el.querySelectorAll('.mini-concluida').forEach(item => {
+    item.addEventListener('click', () => {
+      const lead = STATE.leads.find(l => l.ID === item.dataset.id);
+      if(lead) openChatPanel(lead);
     });
   });
 
@@ -1571,7 +1582,7 @@ function renderBoard(){
 
 function miniConsultaRow(lead){
   const dataTxt = lead.Data_Consulta ? formatDate(lead.Data_Consulta) : 'sem data';
-  const horaTxt = lead.Hora_Consulta ? ' às ' + lead.Hora_Consulta : '';
+  const horaTxt = lead.Hora_Consulta ? ' às ' + formatHora(lead.Hora_Consulta) : '';
   return `<div class="mini-consulta" data-id="${lead.ID}">
     <span class="mini-consulta-name">${escapeHtml(lead.Nome || 'Sem nome')}</span>
     <span class="mini-consulta-date">${dataTxt}${horaTxt}</span>
@@ -1587,6 +1598,17 @@ function miniFrioRow(lead){
   </div>`;
 }
 
+function miniConcluidaRow(lead){
+  const dataTxt = lead.Data_Cirurgia ? formatDate(lead.Data_Cirurgia) : '';
+  return `<div class="mini-consulta mini-concluida" data-id="${lead.ID}" title="Ver conversa">
+    <span class="mini-consulta-name">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:5px;vertical-align:-1px;color:var(--sage);"><path d="M20 6L9 17l-5-5"/></svg>
+      ${escapeHtml(lead.Nome || 'Sem nome')}
+    </span>
+    <span class="mini-consulta-date" style="color:var(--sage);">${dataTxt}</span>
+  </div>`;
+}
+
 function leadCard(lead, posicao){
   const da = daysAgo(lead.Data_Ultima_Interacao);
   const staleClass = da !== null && da >= 5 ? 'card-stale' : '';
@@ -1598,7 +1620,7 @@ function leadCard(lead, posicao){
     ? `<span class="chip chip-cirurgia">${lead.Status_Cirurgia === 'Concluída' ? '✓ Concluída' : 'Cirurgia'}: ${formatDate(lead.Data_Cirurgia)}</span>`
     : '';
   const consultaBadge = isConsulta && lead.Data_Consulta
-    ? `<span class="chip chip-cirurgia">Consulta: ${formatDate(lead.Data_Consulta)}${lead.Hora_Consulta ? ' às ' + lead.Hora_Consulta : ''}</span>`
+    ? `<span class="chip chip-cirurgia">Consulta: ${formatDate(lead.Data_Consulta)}${lead.Hora_Consulta ? ' às ' + formatHora(lead.Hora_Consulta) : ''}</span>`
     : '';
   const jaConsultouBadge = jaConsultou ? `<span class="chip chip-cirurgia">Já Consultou</span>` : '';
   let retornoBadge = '';
@@ -1723,6 +1745,15 @@ function formatDate(iso){
   const d = new Date(iso);
   if(isNaN(d)) return iso;
   return d.toLocaleDateString('pt-BR');
+}
+// Blindagem: se por algum motivo vier um valor de horário corrompido (o Sheets
+// às vezes salva como data completa, tipo "1899-12-30T17:06:28.000Z"), extrai só o HH:MM.
+function formatHora(hora){
+  if(!hora) return '';
+  const str = String(hora);
+  const match = str.match(/T(\d{2}):(\d{2})/);
+  if(match) return match[1] + ':' + match[2];
+  return str;
 }
 function escapeHtml(str){
   return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -1939,7 +1970,7 @@ function openEditConsultaModal(lead){
   pendingEditConsulta = { lead };
   document.getElementById('editConsultaLeadLabel').innerHTML = escapeHtml(lead.Nome);
   document.getElementById('ec_data').value = lead.Data_Consulta ? String(lead.Data_Consulta).slice(0, 10) : '';
-  document.getElementById('ec_hora').value = lead.Hora_Consulta || '';
+  document.getElementById('ec_hora').value = formatHora(lead.Hora_Consulta);
   editConsultaModal.classList.add('open');
 }
 

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Briefing · Lar Sant'Ana</title>
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --verde:#2a5a0a; --verde-p:#173305; --dourado:#b89a64; --creme:#f7f4ee; --linha:#ddd5c4; --texto:#222420; --suave:#6d6f66; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#e9e5dc; font-family:'Manrope',system-ui,sans-serif; color:var(--texto); line-height:1.55; }
+  main { max-width: 780px; margin: 32px auto; background: var(--creme); padding: 56px 60px; border-radius: 18px; box-shadow: 0 18px 50px -30px rgba(23,51,5,.4); }
+  header { border-bottom: 1px solid var(--dourado); padding-bottom: 22px; margin-bottom: 30px; }
+  .rotulo { font-size: 11px; letter-spacing: .26em; text-transform: uppercase; color: var(--dourado); font-weight: 600; }
+  h1 { font-family:'Cormorant Garamond',serif; font-size: 48px; color: var(--verde-p); margin: 8px 0 6px; font-weight: 600; }
+  .lead { font-size: 16px; color: #3b3d37; margin: 0; }
+  section { margin-bottom: 34px; }
+  h2 { font-family:'Cormorant Garamond',serif; font-size: 30px; color: var(--verde-p); margin: 0 0 8px; font-weight: 600; }
+  .ajuda { font-size: 14px; color: var(--suave); margin: 14px 0 8px; }
+  .ajuda.grupo { font-weight: 600; color: var(--verde-p); margin: 14px 0 4px; }
+  label.pergunta { display:block; font-weight:600; font-size: 14.5px; margin: 16px 0 6px; color: var(--verde-p); }
+  textarea, input[type=text] { width:100%; border:1px solid var(--linha); background:#fff; border-radius: 10px; padding: 10px 12px; font: inherit; font-size: 15px; color: var(--texto); }
+  textarea { min-height: 70px; resize: vertical; }
+  textarea:focus, input:focus { outline: 2px solid var(--verde); outline-offset: 1px; }
+  .opcoes { display: grid; gap: 8px; margin-top: 4px; }
+  .opcoes label { display:flex; align-items:center; gap:10px; background:#fff; border:1px solid var(--linha); border-radius: 10px; padding: 10px 14px; font-size: 15px; cursor: pointer; }
+  .opcoes input[type=checkbox] { accent-color: var(--verde); width: 18px; height: 18px; flex: none; }
+  .opcoes input[type=text] { border:none; padding:0 0 0 4px; flex:1; box-shadow:none; background:transparent; }
+  .cores { display:flex; gap:10px; margin-top: 10px; }
+  .cores div { flex:1; border-radius: 10px; min-height: 64px; padding: 8px 10px; font-size: 12px; display:flex; align-items:flex-end; }
+  .rodape { margin-top: 40px; font-size: 12px; color: var(--suave); border-top: 1px solid var(--linha); padding-top: 12px; display:flex; justify-content: space-between; }
+  .botoes { margin-top: 26px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  button { background: var(--verde); color:#fff; border:0; padding: 12px 22px; border-radius: 999px; font: inherit; font-weight: 600; cursor: pointer; }
+  button:disabled { opacity: .6; cursor: wait; }
+  button.secundario { background: transparent; color: var(--verde); border: 1.5px solid var(--verde); }
+  #status { font-size: 14px; color: var(--suave); }
+  #status.ok { color: var(--verde); font-weight: 600; }
+  #status.erro { color: #9b2b1f; font-weight: 600; }
+  @media print { body { background:#fff; } main { box-shadow:none; margin:0; border-radius:0; max-width:none; } .botoes, .rodape-envio { display:none; } }
+  @media (max-width: 640px) { main { padding: 36px 24px; margin: 0; border-radius: 0; } h1 { font-size: 38px; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="rotulo">Briefing · 23 de novembro de 2026</div>
+    <h1>Lar Sant'Ana</h1>
+    <p class="lead">Estas perguntas alinham o nome, o propósito e a marca da residência antes do início do sprint de 120 dias. Responda o que puder e envie ao final.</p>
+  </header>
+
+  <section>
+<h2>0. Seus dados</h2>
+<label class="pergunta" for="contato_nome">Seu nome</label>
+<input type="text" id="contato_nome" name="contato_nome" placeholder="">
+<label class="pergunta" for="contato_whatsapp">WhatsApp</label>
+<input type="text" id="contato_whatsapp" name="contato_whatsapp" placeholder="">
+<label class="pergunta" for="contato_email">E-mail</label>
+<input type="text" id="contato_email" name="contato_email" placeholder="">
+</section>
+<section>
+<h2>1. Nome da instituição</h2>
+<p class="ajuda grupo">Lar / Casa + Sant&#x27;Ana</p>
+<div class="opcoes">
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Lar Sant&#x27;Ana"> Lar Sant&#x27;Ana</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Casa Sant&#x27;Ana"> Casa Sant&#x27;Ana</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Lar Sant&#x27;Ana Residencial"> Lar Sant&#x27;Ana Residencial</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Casa Sant&#x27;Ana Residencial"> Casa Sant&#x27;Ana Residencial</label>
+</div>
+<p class="ajuda grupo">Residencial / Residência + Sant&#x27;Ana</p>
+<div class="opcoes">
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Residencial Sant&#x27;Ana"> Residencial Sant&#x27;Ana</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Residência Sant&#x27;Ana"> Residência Sant&#x27;Ana</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Residencial Sant&#x27;Ana Sênior"> Residencial Sant&#x27;Ana Sênior</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Residência Sant&#x27;Ana Sênior"> Residência Sant&#x27;Ana Sênior</label>
+</div>
+<p class="ajuda grupo">Morada + Sant&#x27;Ana</p>
+<div class="opcoes">
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Morada Sant&#x27;Ana"> Morada Sant&#x27;Ana</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Morada Sant&#x27;Ana Sênior"> Morada Sant&#x27;Ana Sênior</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Morada Sênior Sant&#x27;Ana"> Morada Sênior Sant&#x27;Ana</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Morada Sênior"> Morada Sênior</label>
+</div>
+<p class="ajuda grupo">Com &#x27;Sênior&#x27; antes do nome</p>
+<div class="opcoes">
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Lar Sênior Sant&#x27;Ana"> Lar Sênior Sant&#x27;Ana</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Casa Sênior Sant&#x27;Ana"> Casa Sênior Sant&#x27;Ana</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Residencial Sênior Sant&#x27;Ana"> Residencial Sênior Sant&#x27;Ana</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Residência Sênior Sant&#x27;Ana"> Residência Sênior Sant&#x27;Ana</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Morada Sênior Sant&#x27;Ana"> Morada Sênior Sant&#x27;Ana</label>
+</div>
+<p class="ajuda grupo">Com &#x27;Sênior&#x27; depois do nome</p>
+<div class="opcoes">
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Sant&#x27;Ana Lar Sênior"> Sant&#x27;Ana Lar Sênior</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Sant&#x27;Ana Casa Sênior"> Sant&#x27;Ana Casa Sênior</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Sant&#x27;Ana Residencial Sênior"> Sant&#x27;Ana Residencial Sênior</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Sant&#x27;Ana Residência Sênior"> Sant&#x27;Ana Residência Sênior</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Sant&#x27;Ana Morada Sênior"> Sant&#x27;Ana Morada Sênior</label>
+</div>
+<p class="ajuda grupo">Com &#x27;Longevidade&#x27;</p>
+<div class="opcoes">
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Lar Sant&#x27;Ana de Longevidade"> Lar Sant&#x27;Ana de Longevidade</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Residencial Sant&#x27;Ana de Longevidade"> Residencial Sant&#x27;Ana de Longevidade</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Sant&#x27;Ana Residência de Longevidade"> Sant&#x27;Ana Residência de Longevidade</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Sant&#x27;Ana Morada de Longevidade"> Sant&#x27;Ana Morada de Longevidade</label>
+</div>
+<p class="ajuda grupo">Com &#x27;Idosos&#x27; ou &#x27;Acolhimento&#x27;</p>
+<div class="opcoes">
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Lar Sant&#x27;Ana Acolhimento"> Lar Sant&#x27;Ana Acolhimento</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Casa Sant&#x27;Ana Acolhimento"> Casa Sant&#x27;Ana Acolhimento</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Sant&#x27;Ana Lar para Idosos"> Sant&#x27;Ana Lar para Idosos</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Sant&#x27;Ana Casa para Idosos"> Sant&#x27;Ana Casa para Idosos</label>
+</div>
+<p class="ajuda grupo">Outros</p>
+<div class="opcoes">
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Espaço Sant&#x27;Ana"> Espaço Sant&#x27;Ana</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Vila Sant&#x27;Ana"> Vila Sant&#x27;Ana</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Recanto Sant&#x27;Ana"> Recanto Sant&#x27;Ana</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Sant&#x27;Ana Espaço Sênior"> Sant&#x27;Ana Espaço Sênior</label>
+<label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Sant&#x27;Ana Vila Sênior"> Sant&#x27;Ana Vila Sênior</label>
+</div>
+<div class="opcoes" style="margin-top:10px"><label><input type="checkbox" data-grupo="nome_opcoes" data-valor="Outro"> Outro: <input type="text" data-complemento="nome_outro" id="nome_outro" aria-label="Outro nome"></label></div>
+<label class="pergunta" for="nome_motivo">O que mais pesou na escolha?</label>
+<textarea id="nome_motivo" name="nome_motivo"></textarea>
+</section>
+<section>
+<h2>2. Motivação e propósito</h2>
+<label class="pergunta" for="motiv_porque">Por que decidiu investir em residência para idosos?</label>
+<textarea id="motiv_porque" name="motiv_porque"></textarea>
+<label class="pergunta" for="motiv_resolver">O que quer resolver ao montar a instituição?</label>
+<textarea id="motiv_resolver" name="motiv_resolver"></textarea>
+<label class="pergunta" for="motiv_proposito">Qual é o propósito da instituição, em uma frase?</label>
+<textarea id="motiv_proposito" name="motiv_proposito"></textarea>
+<label class="pergunta" for="motiv_diferencial">O que a diferencia de outras residências da região?</label>
+<textarea id="motiv_diferencial" name="motiv_diferencial"></textarea>
+</section>
+<section>
+<h2>3. Público e diferenciais</h2>
+<label class="pergunta" for="publico_decisor">Quem costuma decidir a escolha: o próprio idoso, filhos ou outro familiar?</label>
+<textarea id="publico_decisor" name="publico_decisor"></textarea>
+<label class="pergunta" for="publico_perfil">Qual perfil de idoso a casa recebe (autonomia, grau de cuidado, idade)?</label>
+<textarea id="publico_perfil" name="publico_perfil"></textarea>
+<label class="pergunta" for="publico_servicos">Quais serviços e estruturas são fundamentais (equipe, enfermagem, atividades, ambiente)?</label>
+<textarea id="publico_servicos" name="publico_servicos"></textarea>
+</section>
+<section>
+<h2>4. Marca e cores</h2>
+<p class="ajuda">Sobre a paleta proposta (verde Sant&#x27;Ana, verde profundo, dourado e creme):</p>
+<div class="opcoes">
+<label><input type="checkbox" data-grupo="cores_direcao" data-valor="Manter o verde e o dourado" id="cores_direcao_0"> Manter o verde e o dourado</label>
+<label><input type="checkbox" data-grupo="cores_direcao" data-valor="Ajustar o tom" id="cores_direcao_1"> Ajustar o tom: <input type="text" data-complemento="cores_direcao_1" aria-label="Ajustar o tom"></label>
+<label><input type="checkbox" data-grupo="cores_direcao" data-valor="Outra direção" id="cores_direcao_2"> Outra direção: <input type="text" data-complemento="cores_direcao_2" aria-label="Outra direção"></label>
+</div>
+<label class="pergunta" for="cores_associa">Cores que associa à casa</label>
+<textarea id="cores_associa" name="cores_associa"></textarea>
+<label class="pergunta" for="cores_evitar">Cores ou estilos que deve evitar</label>
+<textarea id="cores_evitar" name="cores_evitar"></textarea>
+<label class="pergunta" for="cores_referencias">Referências de marcas ou lugares que admira (site ou foto)</label>
+<textarea id="cores_referencias" name="cores_referencias"></textarea>
+</section>
+<section>
+<h2>5. Proposta apresentada</h2>
+<label class="pergunta" for="prop_nome">Nome e assinatura Sant&#x27;Ana com linha de apoio: gostou?</label>
+<textarea id="prop_nome" name="prop_nome"></textarea>
+<label class="pergunta" for="prop_logo">Logotipo e monograma: gostou do desenho? Quer algum ajuste?</label>
+<textarea id="prop_logo" name="prop_logo"></textarea>
+<label class="pergunta" for="prop_site">Site single page: a estrutura (promessa, cuidados, estrutura, galeria, contato) atende?</label>
+<textarea id="prop_site" name="prop_site"></textarea>
+<label class="pergunta" for="prop_aplicacoes">Aplicações: canetas, chaveiros, adesivo de veículo, kit de boas-vindas e toalhas bordadas. Quais fazem sentido?</label>
+<textarea id="prop_aplicacoes" name="prop_aplicacoes"></textarea>
+<label class="pergunta" for="prop_acrescentar">O que quer acrescentar?</label>
+<textarea id="prop_acrescentar" name="prop_acrescentar"></textarea>
+<label class="pergunta" for="prop_retirar">O que quer retirar?</label>
+<textarea id="prop_retirar" name="prop_retirar"></textarea>
+</section>
+<section>
+<h2>6. Próximos passos</h2>
+<label class="pergunta" for="retorno_data">Quando podemos retomar esta conversa?</label>
+<input type="text" id="retorno_data" name="retorno_data" placeholder="">
+</section>
+
+  <div class="botoes">
+    <button id="btnEnviar" onclick="enviarBriefing()">Enviar briefing</button>
+    <button class="secundario" onclick="window.print()">Imprimir</button>
+    <span id="status" aria-live="polite"></span>
+  </div>
+
+  <div class="rodape"><span>Quintessência Digital · 5essência Marketing</span><span>Sant'Ana Morada Sênior</span></div>
+</main>
+<script>
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw8b02DjaXAKXV0MlE-JBGbRbocsujNiu-wM73oqgKzUcqqcJzKZjP7erOTcjxC91-c/exec";
+const CAMPOS = [{"id": "contato_nome", "tipo": "texto", "pergunta": "Seu nome"}, {"id": "contato_whatsapp", "tipo": "texto", "pergunta": "WhatsApp"}, {"id": "contato_email", "tipo": "texto", "pergunta": "E-mail"}, {"id": "nome_opcoes", "tipo": "opcoes", "pergunta": "Nome da instituição (marque quantos quiser, em ordem de preferência)"}, {"id": "nome_motivo", "tipo": "texto", "pergunta": "O que mais pesou na escolha?"}, {"id": "motiv_porque", "tipo": "texto", "pergunta": "Por que decidiu investir em residência para idosos?"}, {"id": "motiv_resolver", "tipo": "texto", "pergunta": "O que quer resolver ao montar a instituição?"}, {"id": "motiv_proposito", "tipo": "texto", "pergunta": "Qual é o propósito da instituição, em uma frase?"}, {"id": "motiv_diferencial", "tipo": "texto", "pergunta": "O que a diferencia de outras residências da região?"}, {"id": "publico_decisor", "tipo": "texto", "pergunta": "Quem costuma decidir a escolha: o próprio idoso, filhos ou outro familiar?"}, {"id": "publico_perfil", "tipo": "texto", "pergunta": "Qual perfil de idoso a casa recebe (autonomia, grau de cuidado, idade)?"}, {"id": "publico_servicos", "tipo": "texto", "pergunta": "Quais serviços e estruturas são fundamentais (equipe, enfermagem, atividades, ambiente)?"}, {"id": "cores_direcao", "tipo": "opcoes", "pergunta": "Sobre a paleta proposta (verde Sant'Ana, verde profundo, dourado e creme):"}, {"id": "cores_associa", "tipo": "texto", "pergunta": "Cores que associa à casa"}, {"id": "cores_evitar", "tipo": "texto", "pergunta": "Cores ou estilos que deve evitar"}, {"id": "cores_referencias", "tipo": "texto", "pergunta": "Referências de marcas ou lugares que admira (site ou foto)"}, {"id": "prop_nome", "tipo": "texto", "pergunta": "Nome e assinatura Sant'Ana com linha de apoio: gostou?"}, {"id": "prop_logo", "tipo": "texto", "pergunta": "Logotipo e monograma: gostou do desenho? Quer algum ajuste?"}, {"id": "prop_site", "tipo": "texto", "pergunta": "Site single page: a estrutura (promessa, cuidados, estrutura, galeria, contato) atende?"}, {"id": "prop_aplicacoes", "tipo": "texto", "pergunta": "Aplicações: canetas, chaveiros, adesivo de veículo, kit de boas-vindas e toalhas bordadas. Quais fazem sentido?"}, {"id": "prop_acrescentar", "tipo": "texto", "pergunta": "O que quer acrescentar?"}, {"id": "prop_retirar", "tipo": "texto", "pergunta": "O que quer retirar?"}, {"id": "retorno_data", "tipo": "texto", "pergunta": "Quando podemos retomar esta conversa?"}];
+
+function coletar() {
+  const dados = { enviado_em: new Date().toISOString(), fonte: 'Briefing Lar Sant\'Ana' };
+  for (const c of CAMPOS) {
+    if (c.tipo === 'texto') {
+      const el = document.getElementById(c.id);
+      dados[c.id] = el ? el.value.trim() : '';
+    }
+  }
+  // opções marcadas (agrupadas)
+  const grupos = {};
+  document.querySelectorAll('input[type=checkbox][data-grupo]').forEach(cb => {
+    const g = cb.dataset.grupo;
+    grupos[g] = grupos[g] || [];
+    if (cb.checked) {
+      let valor = cb.dataset.valor;
+      const comp = cb.parentElement.querySelector('input[type=text]');
+      if (comp && comp.value.trim()) valor += ': ' + comp.value.trim();
+      grupos[g].push(valor);
+    }
+  });
+  const nomeOutro = document.getElementById('nome_outro');
+  if (nomeOutro && nomeOutro.value.trim()) {
+    grupos['nome_opcoes'] = (grupos['nome_opcoes'] || []).map(v => v === 'Outro' ? 'Outro: ' + nomeOutro.value.trim() : v);
+  }
+  for (const g in grupos) dados[g] = grupos[g].join(' | ');
+  return dados;
+}
+
+function validar(dados) {
+  if (!dados.contato_nome) return 'Preencha pelo menos o seu nome para podermos identificar o briefing.';
+  return null;
+}
+
+async function enviarBriefing() {
+  const btn = document.getElementById('btnEnviar');
+  const status = document.getElementById('status');
+  const dados = coletar();
+  const erro = validar(dados);
+  if (erro) { status.className = 'erro'; status.textContent = erro; return; }
+  if (APPS_SCRIPT_URL.startsWith('COLE_AQUI')) {
+    status.className = 'erro';
+    status.textContent = 'Envio ainda não configurado.';
+    return;
+  }
+  btn.disabled = true;
+  status.className = ''; status.textContent = 'Enviando...';
+  try {
+    const resp = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(dados)
+    });
+    const json = await resp.json();
+    if (!json.ok) throw new Error(json.erro || 'Falha no envio');
+    status.className = 'ok';
+    status.textContent = 'Briefing enviado. Obrigada! Entraremos em contato.';
+    btn.textContent = 'Enviado';
+  } catch (e) {
+    btn.disabled = false;
+    status.className = 'erro';
+    status.textContent = 'Não foi possível enviar agora. Tente novamente ou imprima e envie por WhatsApp.';
+  }
+}
+</script>
+</body>
+</html>
